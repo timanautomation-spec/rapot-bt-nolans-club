@@ -204,7 +204,18 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const okId=id=>typeof id==="string"&&/^[A-Za-z0-9_-]{20,}$/.test(id);
 const fotoUrl=(id,w)=>("https://drive.google.com/thumbnail?id="+(encodeURIComponent(id))+"&sz=w"+(w||1200));
-const api=(fn,...a)=>{const u=(typeof APP_URL==="string"?APP_URL:"").trim();if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u))return Promise.reject(new Error("Alamat aplikasi belum diisi di config.js."));if(!navigator.onLine)return Promise.reject(new Error("Tidak ada internet. Coba lagi setelah tersambung."));return fetch(u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn:fn,args:a}),redirect:"follow"}).then(r=>{if(!r.ok)throw new Error("Server menjawab "+r.status+" (alamat ..."+u.slice(-10)+").");return r.text().then(t=>{try{return JSON.parse(t)}catch(x){throw new Error("Jawaban Google bukan data (alamat ..."+u.slice(-10)+"): "+t.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,120))}})},e=>{throw new Error("Tidak bisa terhubung ke Google (alamat ..."+u.slice(-10)+"; "+((e&&e.message)||e)+").")}).then(o=>{if(!o||!o.ok)throw new Error((o&&o.error)||"Terjadi kesalahan.");return o.data})};
+const api=(fn,...a)=>{const u=(typeof APP_URL==="string"?APP_URL:"").trim();
+  if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u))return Promise.reject(new Error("Alamat aplikasi belum diisi di config.js."));
+  if(!navigator.onLine)return Promise.reject(new Error("Tidak ada internet. Coba lagi setelah tersambung."));
+  const ujung=" (alamat ..."+u.slice(-10)+")";
+  const body=JSON.stringify(a);
+  const lewatGet=body.length<1800;
+  const req=lewatGet?fetch(u+"?fn="+encodeURIComponent(fn)+"&args="+encodeURIComponent(body)+"&_="+Date.now(),{redirect:"follow"})
+    :fetch(u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn:fn,args:a}),redirect:"follow"});
+  return req.then(r=>{if(!r.ok)throw new Error("Server menjawab "+r.status+ujung+".");
+      return r.text().then(t=>{try{return JSON.parse(t)}catch(x){throw new Error("Jawaban Google bukan data"+ujung+": "+t.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,120))}})},
+    e=>{throw new Error((lewatGet?"Tidak bisa terhubung ke Google":"Foto tidak bisa dikirim ke Google")+ujung+"; "+((e&&e.message)||e)+".")})
+  .then(o=>{if(!o||!o.ok)throw new Error((o&&o.error)||"Terjadi kesalahan.");return o.data})};
 const errText=e=>(e&&e.message?String(e.message).replace(/^Exception:\s*/,""):"Terjadi kesalahan. Coba lagi.");
 function busy(on,t){const b=$("busy");if(!b)return;b.textContent=t||"Menyimpan…";b.hidden=!on}
 function applyData(d){kids={};(d.anak||[]).forEach(k=>kids[k.id]=k);entries=d.catatan||[];role=d.peran||"tamu";isOwner=role==="pemilik";writable=role!=="tamu";ready=true}
@@ -484,7 +495,7 @@ async function submitEntry(ev){ev.preventDefault();
   const btn=$("saveBtn"),label=btn.textContent;btn.disabled=true;
   const fotos=[];
   if(pending.length){btn.textContent="Menyiapkan foto…";
-    for(const p of pending){try{fotos.push(await upload(p.file,1600))}catch(err){btn.disabled=false;btn.textContent=label;showMsg(uploadErr(err),true);return}}}
+    for(const p of pending){try{fotos.push(await upload(p.file,1200))}catch(err){btn.disabled=false;btn.textContent=label;showMsg(uploadErr(err),true);return}}}
   btn.textContent=fotos.length?"Mengunggah foto…":"Menyimpan…";
   try{const d=await api("simpanCatatan",pin,e,fotos);applyData(d);renderForm();renderKidData();showMsg("Tersimpan.")}
   catch(err){btn.disabled=false;btn.textContent=label;showMsg(errText(err),true)}
