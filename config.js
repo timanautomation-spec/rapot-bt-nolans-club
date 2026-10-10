@@ -1,1 +1,1 @@
-var APP_URL = "https://script.google.com/macros/s/AKfycbwrLFyYH1G5jbOntHWYik4lQRVCrVugU0gFR3QraQXa1ZSUMnd1WDECl_bEgSSsZh3U/exec";
+var APP_URL = "https://script.google.com/macros/s/AKfycbxYTbCs0W3weUfjn6kOk-OQ0H7i2fqYx_pI-zkrAnTI6jbgIhXEIh1ebKL_LNFQm_hN/exec";
