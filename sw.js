@@ -1,6 +1,6 @@
 // Service worker: menyimpan "bungkus" aplikasi agar cepat terbuka dan bisa dipasang.
 // Data tetap diambil langsung dari Google Sheets (perlu internet).
-var CACHE = "rapor-bt-v1";
+var CACHE = "rapor-bt-v2";
 var FILES = ["./", "./index.html", "./config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", function (e) {
