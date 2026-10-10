@@ -234,7 +234,9 @@ textarea{min-height:64px;resize:vertical}
 <script>
 (function(){
 const SKILLS=[["footwork","Footwork"],["servis","Servis"],["clear","Lob / Clear"],["smash","Smash"],["netting","Netting"],["defend","Bertahan"]];
-const TYPES=[["train","Latihan"],["coach","Masukan Pelatih"],["skill","Nilai Keterampilan"],["run","Lari"],["match","Pertandingan"]];
+const TYPES=[["train","Latihan"],["coach","Masukan Pelatih"],["skill","Nilai Keterampilan"],["run","Lari"],["fisik","Tinggi & Berat"],["match","Pertandingan"]];
+const fmt1=v=>(+v).toLocaleString("id-ID",{maximumFractionDigits:1});
+const sgn=v=>(v>0?"+":v<0?"−":"±")+fmt1(Math.abs(v));
 const num=s=>{const v=parseFloat(String(s||"").replace(",","."));return isFinite(v)?v:0};
 function parseDur(s){s=String(s||"").trim();if(!s)return 0;const p=s.split(/[:.]/).map(x=>parseInt(x,10));if(p.some(isNaN))return 0;
   return p.length===3?p[0]*3600+p[1]*60+p[2]:p.length===2?p[0]*60+p[1]:p[0]*60}
@@ -361,6 +363,7 @@ function renderDash(){
       <span>Pertandingan</span><b>${mt.length?`${mw} M · ${ml} K`:"–"}</b>
       <span>Selisih poin/set</span><b>${gapTxt}</b>
       <span>Rata-rata keterampilan</span><b>${skTxt}</b>
+      <span>Tinggi / berat</span><b>${(()=>{const f=entries.filter(e=>e.anak===id&&e.jenis==="fisik").sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""));const t=f.find(e=>e.tinggi),w=f.find(e=>e.berat);return t||w?(t?fmt1(t.tinggi)+" cm":"–")+" · "+(w?fmt1(w.berat)+" kg":"–"):"–"})()}</b>
       <span>Lari terakhir</span><b>${(()=>{const r=entries.filter(e=>e.anak===id&&e.jenis==="run").sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""))[0];return r?`${fmtKm(r.jarak)} km${paceOf(r)?` · ${fmtDur(paceOf(r))}/km`:""}`:"–"})()}</b>
       <span>Suasana terakhir</span><b>${lt&&lt.mood?esc(lt.mood):"–"}</b></span></span></button>`}).join("")}</div>
     <p class="hint">Selisih poin per set dari pertandingan pertama ke terakhir dalam periode ini. Makin mendekati nol berarti makin seimbang dengan lawan.</p></section>`;
@@ -501,6 +504,7 @@ function renderKid(){
   <section><h2>Selisih Poin per Pertandingan</h2><div class="panel"><div id="chartBox"></div>
     <p class="hint">Batang makin pendek di bawah garis nol berarti skor makin rapat dengan lawan, tanda kemajuan walau belum menang.</p></div></section>
   <section><h2>Latihan Fisik: Lari</h2><div class="panel"><div id="runBox"></div></div></section>
+  <section><h2>Pertumbuhan</h2><div class="panel"><div id="growBox"></div></div></section>
   <section><h2>Keterampilan Terakhir</h2><div class="panel"><div class="skills" id="skills"></div>
     <p class="hint">Nilai 1–5, sebaiknya diisi bersama pelatih sebulan sekali.</p></div></section>
   ${writable&&db?`<section><h2>Tambah Catatan</h2><div class="panel"><div class="tabs" role="tablist" id="tabs"></div><form id="form" novalidate></form><p class="msg" id="msg" role="status"></p></div></section>`:""}
@@ -511,7 +515,38 @@ function renderKid(){
 function renderKidData(){
   if(view.name!=="kid")return;
   const ex=isOwner&&entries.some(e=>e.contoh&&e.anak===view.id);$("exslot").innerHTML=ex?exbarHTML():"";bindExbar();
-  renderStats();renderChart();renderRun();renderSkills();renderList();
+  renderStats();renderChart();renderRun();renderGrow();renderSkills();renderList();
+}
+function lineChart(pts,fmt,label,unit){
+  const W=340,H=150,L=40,R=12,T=12,B=24,pw=W-L-R,ph=H-T-B;
+  const vs=pts.map(p=>p.v);let lo=Math.min(...vs),hi=Math.max(...vs);const pad=Math.max((hi-lo)*.2,unit);lo=Math.floor((lo-pad)/unit)*unit;hi=Math.ceil((hi+pad)/unit)*unit;
+  const ts=pts.map(p=>new Date(p.t+"T00:00:00").getTime()),t0=Math.min(...ts),t1=Math.max(...ts);
+  const x=i=>pts.length===1?L+pw/2:L+pw*(ts[i]-t0)/((t1-t0)||1),y=v=>T+ph-(v-lo)/((hi-lo)||1)*ph;
+  let g=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">`;
+  [lo,(lo+hi)/2,hi].forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Nunito Sans,system-ui">${fmt(v)}</text>`});
+  if(pts.length>1)g+=`<polyline fill="none" stroke="var(--court)" stroke-width="2.5" stroke-linejoin="round" points="${pts.map((p,i)=>x(i)+","+y(p.v)).join(" ")}"/>`;
+  pts.forEach((p,i)=>{const last=i===pts.length-1;g+=`<circle cx="${x(i)}" cy="${y(p.v)}" r="${last?5:3.5}" fill="${last?"var(--cork)":"var(--court)"}"><title>${fmtDate(p.t)}: ${fmt(p.v)}</title></circle>`;
+    if(i===0||last||pts.length<=5){const d=new Date(p.t+"T00:00:00");g+=`<text x="${x(i)}" y="${H-7}" text-anchor="${pts.length>1?(i===0?"start":last?"end":"middle"):"middle"}" font-size="9.5" fill="var(--muted)" font-family="Nunito Sans,system-ui">${d.toLocaleDateString("id-ID",{month:"short",year:"2-digit"})}</text>`}});
+  return g+"</svg>";
+}
+function growInfo(list){
+  const f=list.filter(e=>e.jenis==="fisik").sort((a,b)=>(a.tanggal||"").localeCompare(b.tanggal||""));
+  const T=f.filter(e=>+e.tinggi>0).map(e=>({t:e.tanggal,v:+e.tinggi})),W=f.filter(e=>+e.berat>0).map(e=>({t:e.tanggal,v:+e.berat}));
+  const span=a=>a.length>1?Math.max(1,Math.round((new Date(a[a.length-1].t)-new Date(a[0].t))/(864e5*30.44))):0;
+  return {n:f.length,T,W,dT:T.length>1?T[T.length-1].v-T[0].v:null,dW:W.length>1?W[W.length-1].v-W[0].v:null,mT:span(T),mW:span(W),firstT:T[0],firstW:W[0]};
+}
+function renderGrow(){
+  const g=growInfo(of(view.id));
+  if(!g.n){$("growBox").innerHTML=`<div class="empty">Belum ada pengukuran.${isOwner?" Isi lewat tab <b>Tinggi &amp; Berat</b>, cukup sebulan sekali.":" Pengukuran diisi oleh pemilik."}</div>`;return}
+  const lt=g.T[g.T.length-1],lw=g.W[g.W.length-1];
+  let h=`<div class="stats" style="grid-template-columns:repeat(2,1fr);margin-bottom:10px">
+    <div class="stat"><b>${lt?fmt1(lt.v):"–"}<small style="font-size:.9rem"> cm</small></b><span>Tinggi${g.dT!==null?` · ${sgn(g.dT)} cm dalam ${g.mT} bln`:""}</span></div>
+    <div class="stat"><b>${lw?fmt1(lw.v):"–"}<small style="font-size:.9rem"> kg</small></b><span>Berat${g.dW!==null?` · ${sgn(g.dW)} kg dalam ${g.mW} bln`:""}</span></div></div>`;
+  if(g.T.length>1)h+=`<h5 style="margin:6px 0 2px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Tinggi badan (cm)</h5>`+lineChart(g.T,fmt1,"Tinggi badan",1);
+  if(g.W.length>1)h+=`<h5 style="margin:10px 0 2px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Berat badan (kg)</h5>`+lineChart(g.W,fmt1,"Berat badan",1);
+  if(g.T.length<2&&g.W.length<2)h+=`<p class="hint">Grafik muncul setelah ada minimal 2 pengukuran.</p>`;
+  h+=`<p class="hint">Saat tumbuh pesat, gerakan anak bisa terasa canggung sementara. Itu wajar. Untuk menilai apakah tinggi dan berat sesuai usia, tanyakan ke dokter anak yang memakai grafik pertumbuhan.</p>`;
+  $("growBox").innerHTML=h;
 }
 function renderRun(){
   const all=of(view.id).filter(e=>e.jenis==="run").sort((a,b)=>(a.tanggal||"").localeCompare(b.tanggal||""));
@@ -559,10 +594,12 @@ function renderSkills(){
     `<p class="hint" style="margin:0">Penilaian ${fmtDate(s[0].tanggal)}${prev?` · dibanding ${fmtDate(s[1].tanggal)}`:""}</p>`;
 }
 function renderTabs(){
-  $("tabs").innerHTML=TYPES.map(([k,n])=>`<button class="tab" role="tab" type="button" data-t="${k}" aria-selected="${k===type}">${n}</button>`).join("");
+  const T=TYPES.filter(([k])=>k!=="fisik"||isOwner);if(!T.some(t=>t[0]===type))type="train";
+  $("tabs").innerHTML=T.map(([k,n])=>`<button class="tab" role="tab" type="button" data-t="${k}" aria-selected="${k===type}">${n}</button>`).join("");
   $("tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{type=b.dataset.t;renderTabs();renderForm()});
 }
 function renderForm(){
+  if(type==="fisik"&&!isOwner)type="train";
   const f=$("form");if(!f)return;const d=`<label>Tanggal<input type="date" id="f-tanggal" value="${today()}"></label>`;
   if(type==="match")f.innerHTML=`<div class="row">${d}<label>Kategori umur<input id="f-kategori" placeholder="mis. U-13"></label></div>
    <label>Nama turnamen<input id="f-turnamen" placeholder="mis. Kejuaraan Antar Klub"></label>
@@ -572,6 +609,9 @@ function renderForm(){
   else if(type==="train")f.innerHTML=`<div class="row">${d}<label>Suasana hati anak<select id="f-mood"><option>Semangat</option><option>Biasa</option><option>Lelah</option><option>Malas</option></select></label></div>
    <label>Fokus latihan<input id="f-fokus" placeholder="mis. footwork, servis pendek"></label>
    <label>Yang saya amati<textarea id="f-catatan" placeholder="Hal kecil yang terlihat berbeda dari minggu lalu"></textarea></label>`;
+  else if(type==="fisik")f.innerHTML=`${d}<div class="row"><label>Tinggi badan (cm)<input id="f-tinggi" inputmode="decimal" placeholder="mis. 142,5"></label><label>Berat badan (kg)<input id="f-berat" inputmode="decimal" placeholder="mis. 35,2"></label></div>
+   <label>Catatan<textarea id="f-catatan" placeholder="Opsional, mis. diukur di klub tanpa sepatu"></textarea></label>
+   <p class="hint" style="margin:0">Ukur di waktu yang sama tiap bulan, misalnya pagi hari tanpa sepatu, agar hasilnya bisa dibandingkan.</p>`;
   else if(type==="run")f.innerHTML=`<div class="row">${d}<label>Jenis lari<select id="f-jenislari"><option>Lari jarak</option><option>Interval / sprint</option><option>Lari santai</option></select></label></div>
    <div class="row"><label>Jarak (km)<input id="f-jarak" inputmode="decimal" placeholder="mis. 2 atau 1,5"></label><label>Waktu (menit:detik)<input id="f-waktu" inputmode="numeric" placeholder="mis. 12:30"></label></div>
    <p class="hint" id="pacePrev" style="margin:0">Pace dihitung otomatis dari jarak dan waktu.</p>
@@ -584,7 +624,7 @@ function renderForm(){
    f.querySelectorAll(".dots").forEach(g=>g.querySelectorAll("button").forEach(b=>b.onclick=()=>{ratings[g.dataset.s]=+b.dataset.v;g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.v<=ratings[g.dataset.s]))}))}
   pending.forEach(p=>URL.revokeObjectURL(p.url));pending=[];
   if(type==="run"){const up=()=>{const k=num($("f-jarak").value),t=parseDur($("f-waktu").value);$("pacePrev").textContent=k>0&&t>0?`Pace: ${fmtDur(t/k)} per km`:"Pace dihitung otomatis dari jarak dan waktu."};$("f-jarak").oninput=up;$("f-waktu").oninput=up}
-  if(assets){const lbl=type==="match"?"Foto momen & lawan":type==="run"?"Foto lari":type==="train"?"Foto latihan":type==="coach"?"Foto (mis. catatan pelatih)":"Foto";
+  if(assets){const lbl=type==="match"?"Foto momen & lawan":type==="fisik"?"Foto (opsional)":type==="run"?"Foto lari":type==="train"?"Foto latihan":type==="coach"?"Foto (mis. catatan pelatih)":"Foto";
     f.insertAdjacentHTML("beforeend",`<div class="photos"><label for="f-foto">${lbl} <span style="font-weight:400">(maks. ${MAXP})</span></label>
       <div class="pick"><button type="button" class="pickbtn" id="pickBtn">+ Tambah foto</button><input type="file" id="f-foto" accept="image/*" multiple hidden></div><div class="thumbs" id="pthumbs"></div></div>`);
     $("pickBtn").onclick=()=>$("f-foto").click();
@@ -602,6 +642,11 @@ async function submitEntry(ev){ev.preventDefault();
   if(type==="match"){Object.assign(e,{turnamen:val("f-turnamen"),kategori:val("f-kategori"),lawan:val("f-lawan"),babak:val("f-babak"),skor:val("f-skor"),catatan:val("f-catatan")});
     if(!parseSets(e.skor).length){showMsg("Tulis skor seperti 15-21, 18-21 (angka anak lebih dulu).",true);return}}
   else if(type==="train"){Object.assign(e,{mood:val("f-mood"),fokus:val("f-fokus"),catatan:val("f-catatan")});if(!e.fokus&&!e.catatan&&!pending.length){showMsg("Isi fokus latihan atau catatan dulu.",true);return}}
+  else if(type==="fisik"){const ti=num(val("f-tinggi")),be=num(val("f-berat"));
+    if(!ti&&!be){showMsg("Isi tinggi atau berat badan dulu.",true);return}
+    if(ti&&(ti<60||ti>220)){showMsg("Tinggi badan tidak wajar. Tulis dalam cm, mis. 142,5.",true);return}
+    if(be&&(be<10||be>150)){showMsg("Berat badan tidak wajar. Tulis dalam kg, mis. 35,2.",true);return}
+    Object.assign(e,{tinggi:ti?Math.round(ti*10)/10:0,berat:be?Math.round(be*10)/10:0,catatan:val("f-catatan")})}
   else if(type==="run"){const k=num(val("f-jarak")),t=parseDur(val("f-waktu"));
     if(!(k>0)||k>50){showMsg("Isi jarak dalam km, mis. 2 atau 1,5.",true);return}
     if(val("f-waktu")&&!t){showMsg("Tulis waktu seperti 12:30 (menit:detik).",true);return}
@@ -627,6 +672,7 @@ function itemHTML(e){
     <div class="score">${i.sets.map(s=>s.join("–")).join("  ·  ")}</div>
     <p class="hint" style="margin:0">${[e.kategori,e.babak,e.lawan&&("vs "+e.lawan)].filter(Boolean).map(esc).join(" · ")}</p>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`}
   else if(e.jenis==="train")body=`<div class="head"><span class="title">${esc(e.fokus||"Latihan")}</span>${e.mood?`<span class="pill mood">${esc(e.mood)}</span>`:""}</div>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`;
+  else if(e.jenis==="fisik")body=`<div class="head"><span class="title">Pengukuran</span></div><div class="score">${[+e.tinggi?fmt1(e.tinggi)+" cm":"",+e.berat?fmt1(e.berat)+" kg":""].filter(Boolean).join("  ·  ")}</div>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`;
   else if(e.jenis==="run")body=`<div class="head"><span class="title">${esc(e.jenislari||"Lari")}</span>${e.kondisi?`<span class="pill mood">${esc(e.kondisi)}</span>`:""}</div>
     <div class="score">${fmtKm(e.jarak)} km${e.detik?`  ·  ${fmtDur(e.detik)}`:""}${paceOf(e)?`  ·  ${fmtDur(paceOf(e))}/km`:""}</div>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`;
   else if(e.jenis==="coach")body=`<p>${esc(e.masukan)}</p>${e.target?`<p><b>Target:</b> ${esc(e.target)}</p>`:""}`;
@@ -764,6 +810,7 @@ function buildReport(){
     const sk=skAll[0],skp=skAll[1];
     R.kids.push({id,nama:k.nama,info:[k.lahir&&("Usia ±"+(new Date().getFullYear()-k.lahir)+" th"),k.klub,k.pelatih&&("Pelatih: "+k.pelatih)].filter(Boolean).join(" · "),
       latihan:tr.length,fokus:tr.map(e=>e.fokus).filter(Boolean).slice(-5),mood,
+      grow:(()=>{const g=growInfo(entries.filter(e=>e.anak===id&&e.tanggal<=b));const gp=growInfo(E);return {lt:g.T[g.T.length-1],lw:g.W[g.W.length-1],dT:gp.dT,dW:gp.dW,n:gp.n}})(),
       lari:{n:ru.length,km:ru.reduce((s,e)=>s+(+e.jarak||0),0),best:best?paceOf(best):0,first:rp_[0]?paceOf(rp_[0]):0,last:rp_.length?paceOf(rp_[rp_.length-1]):0},
       match:{n:ma.length,mw,ml,sw,sl,rows:mrows},
       skill:sk?{tgl:fmtDate(sk.tanggal),prevTgl:skp?fmtDate(skp.tanggal):"",rows:SKILLS.filter(([s])=>sk.nilai&&sk.nilai[s]).map(([s,n])=>{const v=+sk.nilai[s],p=skp&&skp.nilai?+skp.nilai[s]||0:0;return [n,v+"/5",p?(v>p?"Naik +"+(v-p):v<p?"Turun "+(v-p):"Tetap"):"–"]})}:null,
@@ -780,6 +827,7 @@ function buildReport(){
   }
   return R;
 }
+function growTxt(g){const p=[];if(g.lt)p.push("Tinggi "+fmt1(g.lt.v)+" cm"+(g.dT!==null?" ("+sgn(g.dT).replace("−","-")+" cm di periode ini)":""));if(g.lw)p.push("Berat "+fmt1(g.lw.v)+" kg"+(g.dW!==null?" ("+sgn(g.dW).replace("−","-")+" kg di periode ini)":""));return p.join("   |   ")+(g.lt||g.lw?"  - pengukuran terakhir "+fmtDate((g.lt&&g.lw?(g.lt.t>g.lw.t?g.lt:g.lw):(g.lt||g.lw)).t):"")}
 function moodTxt(m){const k=Object.keys(m);return k.length?k.map(x=>x+" "+m[x]+"x").join(", "):"–"}
 function reportHTML(R){
   const tbl=(head,rows,num)=>`<div class="tw"><table class="rt"><thead><tr>${head.map((h,i)=>`<th${(num||[]).includes(i)?' class="n"':""}>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr${r.tot?' class="tot"':""}>${r.map((c,i)=>`<td${(num||[]).includes(i)?' class="n"':""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
@@ -790,6 +838,7 @@ function reportHTML(R){
     <div class="kv"><div><b>${k.latihan}</b><span>Catatan latihan</span></div><div><b>${k.lari.n}</b><span>Sesi lari · ${fmtKm(k.lari.km)} km</span></div>
     <div><b>${k.match.n?k.match.mw+" M / "+k.match.ml+" K":"–"}</b><span>Pertandingan</span></div><div><b>${k.match.n?k.match.sw+" – "+k.match.sl:"–"}</b><span>Set menang – kalah</span></div></div>`;
     if(k.latihan)h+=`<p class="note">Suasana hati: ${esc(moodTxt(k.mood))}${k.fokus.length?" · Fokus: "+esc(k.fokus.join(", ")):""}</p>`;
+    if(k.grow.lt||k.grow.lw)h+=`<h5>Pertumbuhan</h5><p class="note" style="color:var(--fg)">${growTxt(k.grow)}</p>`;
     if(k.lari.n)h+=`<h5>Lari</h5><p class="note" style="color:var(--fg)">Pace terbaik ${k.lari.best?fmtDur(k.lari.best)+"/km":"–"}${k.lari.first&&k.lari.last&&k.lari.first!==k.lari.last?` · dari ${fmtDur(k.lari.first)} ke ${fmtDur(k.lari.last)} per km (${k.lari.last<k.lari.first?"makin cepat":"makin lambat"})`:""}</p>`;
     if(k.match.rows.length)h+=`<h5>Pertandingan</h5>`+tbl(["Tanggal","Turnamen","Lawan","Skor","Hasil"],k.match.rows);
     if(k.skill)h+=`<h5>Keterampilan (penilaian ${esc(k.skill.tgl)}${k.skill.prevTgl?", dibanding "+esc(k.skill.prevTgl):""})</h5>`+tbl(["Keterampilan","Nilai","Perubahan"],k.skill.rows,[1]);
@@ -848,6 +897,7 @@ async function exportPdf(){
     R.kids.forEach(k=>{h4(k.nama);if(k.info)para(k.info);
       kv([[String(k.latihan),"Catatan latihan"],[k.lari.n+" / "+fmtKm(k.lari.km)+" km","Sesi lari / jarak"],[k.match.n?k.match.mw+" M / "+k.match.ml+" K":"-","Pertandingan"],[k.match.n?k.match.sw+" - "+k.match.sl:"-","Set menang - kalah"]]);
       if(k.latihan)para("Suasana hati: "+moodTxt(k.mood)+(k.fokus.length?"   |   Fokus: "+k.fokus.join(", "):""));
+      if(k.grow.lt||k.grow.lw){h5("Pertumbuhan");y+=3;para(growTxt(k.grow),[23,37,31])}
       if(k.lari.n){h5("Lari");y+=3;para("Pace terbaik "+(k.lari.best?fmtDur(k.lari.best)+"/km":"-")+(k.lari.first&&k.lari.last&&k.lari.first!==k.lari.last?"   |   dari "+fmtDur(k.lari.first)+" ke "+fmtDur(k.lari.last)+" per km ("+(k.lari.last<k.lari.first?"makin cepat":"makin lambat")+")":""),[23,37,31])}
       if(k.match.rows.length){h5("Pertandingan");table(["Tanggal","Turnamen","Lawan","Skor","Hasil"],k.match.rows)}
       if(k.skill){h5("Keterampilan (penilaian "+k.skill.tgl+(k.skill.prevTgl?", dibanding "+k.skill.prevTgl:"")+")");table(["Keterampilan","Nilai","Perubahan"],k.skill.rows,[1])}
