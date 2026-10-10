@@ -8,6 +8,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 /* Layout: aplikasi HP satu kolom. Beranda = daftar profil anak; Profil = kartu identitas + ringkasan + catatan; Formulir profil untuk tambah/ubah/hapus. Lapangan hijau + kok gabus. */
 :root{
@@ -140,8 +142,9 @@ textarea{min-height:64px;resize:vertical}
 .lb img{max-width:100%;max-height:85vh;border-radius:8px}
 .lb button{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:12px;background:#fff;color:#17251f;border:0;border-radius:999px;padding:8px 14px;font:700 .9rem var(--body);cursor:pointer}
 /* Dasbor */
-.nav{display:flex;gap:4px;background:rgba(0,0,0,.18);border-radius:10px;padding:4px;margin-top:14px;position:relative;z-index:1;width:max-content;max-width:100%}
-.nav button{background:transparent;color:var(--court-ink);border:0;border-radius:7px;padding:7px 14px;font:700 .9rem var(--body);cursor:pointer;opacity:.85}
+.nav{display:flex;gap:4px;background:rgba(0,0,0,.18);border-radius:10px;padding:4px;margin-top:14px;position:relative;z-index:1;width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{background:transparent;color:var(--court-ink);border:0;border-radius:7px;padding:7px 12px;font:700 .88rem var(--body);cursor:pointer;opacity:.85;white-space:nowrap;flex:none}
 .nav button[aria-current="page"]{background:var(--court-ink);color:var(--court);opacity:1}
 .range{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -172,6 +175,50 @@ textarea{min-height:64px;resize:vertical}
 .tg{display:grid;gap:8px}
 .tg div{font-size:.9rem}
 .tg b{display:block;font-size:.78rem;color:var(--muted)}
+/* Laporan */
+.opts{display:grid;gap:10px}
+.checks{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem}
+.checks label{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--fg);font-weight:600}
+.checks input{width:auto}
+.paper{background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.08);padding:22px 20px;font-size:.88rem;line-height:1.45}
+.paper .rhead{border-bottom:3px solid var(--court);padding-bottom:10px;margin-bottom:14px}
+.paper .rhead h3{font-family:var(--display);font-size:1.5rem;text-transform:uppercase;letter-spacing:.03em;margin:0;color:var(--court)}
+.paper .rhead p{margin:2px 0 0;color:var(--muted);font-size:.8rem}
+.paper h4{font-family:var(--display);font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 6px;color:var(--fg)}
+.paper h5{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+.rt{width:100%;border-collapse:collapse;font-size:.82rem;font-variant-numeric:tabular-nums}
+.rt th,.rt td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.rt th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rt td.n,.rt th.n{text-align:right}
+.rt tr.tot td{font-weight:700;border-top:2px solid var(--fg)}
+.tw{overflow-x:auto}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px 12px;margin:4px 0}
+.kv div{border-left:3px solid var(--court);padding-left:8px}
+.kv b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.kv span{font-size:.74rem;color:var(--muted)}
+.paper .note{color:var(--muted);font-size:.8rem;margin:4px 0}
+.dlrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* Pengeluaran */
+.monthbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
+.monthbar b{font-family:var(--display);font-size:1.35rem;letter-spacing:.03em;text-transform:uppercase}
+.mbtn{background:var(--surface);border:1px solid var(--line);color:var(--fg);border-radius:8px;width:40px;height:36px;font:700 1.1rem var(--body);cursor:pointer}
+.mbtn:disabled{opacity:.4;cursor:default}
+.money{font-variant-numeric:tabular-nums}
+.tile.big b{font-size:1.55rem}
+.cats{display:grid;gap:8px}
+.cat{display:grid;grid-template-columns:8.5rem 1fr 6.5rem;gap:8px;align-items:center;font-size:.88rem}
+.cat .amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.cat .bar i{background:var(--cork)}
+.xitem{display:grid;grid-template-columns:1fr auto;gap:2px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.xitem .xamt{font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.xitem .xmeta{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.8rem;color:var(--muted)}
+.xitem .xtitle{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.xitem .xact{grid-column:1/-1;display:flex;gap:4px;justify-content:flex-end}
+.xitem .xact button{background:none;border:0;color:var(--muted);font:600 .8rem var(--body);cursor:pointer;padding:4px 6px}
+.xitem .xact button.arm{color:var(--lose)}
+.xitem .thumb{width:56px;height:56px}
+.private{display:inline-flex;gap:6px;align-items:center;font-size:.8rem;color:var(--muted);margin-top:8px}
+@media (max-width:420px){.cat{grid-template-columns:6.8rem 1fr 5.6rem;font-size:.82rem}}
 @media (max-width:420px){.row{grid-template-columns:1fr}.skill{grid-template-columns:6.4rem 1fr 3.2rem}.rate{grid-template-columns:6.4rem 1fr}.dots button{width:30px;height:30px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -182,10 +229,10 @@ textarea{min-height:64px;resize:vertical}
 </div>
 <div class="busy" id="busy" hidden>Menyimpan…</div>
 <div class="lb" id="lb" hidden><button type="button" id="lbClose">Tutup</button><img id="lbImg" alt="Foto"></div>
-<div id="diag" hidden style="position:fixed;left:12px;right:12px;bottom:12px;background:#b5483a;color:#fff;padding:12px 14px;border-radius:10px;font:600 14px system-ui,sans-serif;z-index:99"></div>
-<script>window.onerror=function(m,s,l){var d=document.getElementById("diag");d.hidden=false;d.textContent="Error: "+m+(l?" (baris "+l+")":"");};</script>
+
 <script>document.write('<script src="config.js?t='+Date.now()+'"><\/script>')</script>
 <script>
+(function(){
 const SKILLS=[["footwork","Footwork"],["servis","Servis"],["clear","Lob / Clear"],["smash","Smash"],["netting","Netting"],["defend","Bertahan"]];
 const TYPES=[["train","Latihan"],["coach","Masukan Pelatih"],["skill","Nilai Keterampilan"],["run","Lari"],["match","Pertandingan"]];
 const num=s=>{const v=parseFloat(String(s||"").replace(",","."));return isFinite(v)?v:0};
@@ -201,9 +248,9 @@ try{pin=localStorage.getItem("rbt-pin")||""}catch(e){}
 let dashRange=90;
 let kids={}, entries=[], view={name:"dash"}, type="train", hfilter="all", ratings={}, pending=[], avatarPending=null, avatarRemove=false;
 const $=id=>document.getElementById(id);
-const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const okId=id=>typeof id==="string"&&/^[A-Za-z0-9_-]{20,}$/.test(id);
-const fotoUrl=(id,w)=>("https://drive.google.com/thumbnail?id="+(encodeURIComponent(id))+"&sz=w"+(w||1200));
+const fotoUrl=(id,w)=>`https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${w||1200}`;
 const api=(fn,...a)=>{const u=(typeof APP_URL==="string"?APP_URL:"").trim();
   if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u))return Promise.reject(new Error("Alamat aplikasi belum diisi di config.js."));
   if(!navigator.onLine)return Promise.reject(new Error("Tidak ada internet. Coba lagi setelah tersambung."));
@@ -218,12 +265,12 @@ const api=(fn,...a)=>{const u=(typeof APP_URL==="string"?APP_URL:"").trim();
   .then(o=>{if(!o||!o.ok)throw new Error((o&&o.error)||"Terjadi kesalahan.");return o.data})};
 const errText=e=>(e&&e.message?String(e.message).replace(/^Exception:\s*/,""):"Terjadi kesalahan. Coba lagi.");
 function busy(on,t){const b=$("busy");if(!b)return;b.textContent=t||"Menyimpan…";b.hidden=!on}
-function applyData(d){kids={};(d.anak||[]).forEach(k=>kids[k.id]=k);entries=d.catatan||[];role=d.peran||"tamu";isOwner=role==="pemilik";writable=role!=="tamu";ready=true}
+function applyData(d){kids={};(d.anak||[]).forEach(k=>kids[k.id]=k);entries=d.catatan||[];biaya=d.pengeluaran||[];role=d.peran||"tamu";isOwner=role==="pemilik";writable=role!=="tamu";ready=true}
 const today=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
 const fmtDate=s=>{try{return new Date(s+"T00:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}catch(e){return s||""}};
 const fmtMonth=s=>{try{return new Date(s+"-01T00:00:00").toLocaleDateString("id-ID",{month:"long",year:"numeric"})}catch(e){return s||""}};
 const initials=n=>String(n||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
-const avatarHTML=k=>okId(k.foto)?("<span class=\"avatar\"><img src=\""+(fotoUrl(k.foto,300))+"\" alt=\"\" referrerpolicy=\"no-referrer\"></span>"):("<span class=\"avatar\">"+(esc(initials(k.nama)))+"</span>");
+const avatarHTML=k=>okId(k.foto)?`<span class="avatar"><img src="${fotoUrl(k.foto,300)}" alt="" referrerpolicy="no-referrer"></span>`:`<span class="avatar">${esc(initials(k.nama))}</span>`;
 const sortedKids=()=>Object.entries(kids).sort((a,b)=>(+a[1].lahir||9999)-(+b[1].lahir||9999)||(a[1].dibuat||0)-(b[1].dibuat||0));
 const of=id=>entries.filter(e=>e.anak===id);
 
@@ -237,13 +284,14 @@ function shrink(file,max){return new Promise(res=>{const img=new Image(),u=URL.c
 async function upload(file,max){const b=await shrink(file,max);const d=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(b)});return {data:d}}
 function uploadErr(err){return "Foto tidak bisa dibaca. Pilih foto lain."}
 async function dropAssets(){}
-function whoBar(){return ("<div class=\"who-bar\">"+(role==="pemilik"?"<span>Masuk sebagai pemilik</span>":role==="pengisi"?"<span>Masuk sebagai pengisi</span>":"")+"<button type=\"button\" id=\"whoBtn\">"+(role==="tamu"?"Masuk dengan PIN":"Keluar")+"</button></div>")}
+function whoBar(){return `<div class="who-bar">${role==="pemilik"?"<span>Masuk sebagai pemilik</span>":role==="pengisi"?"<span>Masuk sebagai pengisi</span>":""}<button type="button" id="whoBtn">${role==="tamu"?"Masuk dengan PIN":"Keluar"}</button></div>`}
 function bindWho(){const b=$("whoBtn");if(!b)return;b.onclick=()=>{if(role==="tamu")go({name:"login"});else{pin="";try{localStorage.removeItem("rbt-pin")}catch(e){}role="tamu";isOwner=false;writable=false;refresh()}}}
 function go(v){view=v;try{localStorage.setItem("rbt-view",JSON.stringify(v.name==="kidform"||v.name==="login"?{name:"dash"}:v))}catch(e){}render();window.scrollTo(0,0)}
 function renderLogin(){
-  $("top").innerHTML="<div class=\"toprow\"><button type=\"button\" class=\"back\" id=\"back\">‹ Kembali</button></div><h1 style=\"margin-top:12px\">Masuk</h1><p class=\"sub\">Masukkan PIN dari pemilik aplikasi.</p>";
+  $("top").innerHTML=`<div class="toprow"><button type="button" class="back" id="back">‹ Kembali</button></div><h1 style="margin-top:12px">Masuk</h1><p class="sub">Masukkan PIN dari pemilik aplikasi.</p>`;
   $("back").onclick=()=>go({name:"dash"});
-  $("view").innerHTML="<section><div class=\"panel\"><form id=\"lform\" novalidate><label>PIN<input id=\"l-pin\" type=\"password\" inputmode=\"numeric\" autocomplete=\"current-password\" maxlength=\"20\"></label><button class=\"primary\" type=\"submit\" id=\"lBtn\">Masuk</button></form><p class=\"msg\" id=\"msg\" role=\"status\"></p>\n    <p class=\"hint\">PIN pemilik bisa mengelola profil anak. PIN pengisi bisa menambah catatan. Tanpa PIN, aplikasi tetap bisa dilihat.</p></div></section>";
+  $("view").innerHTML=`<section><div class="panel"><form id="lform" novalidate><label>PIN<input id="l-pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="20"></label><button class="primary" type="submit" id="lBtn">Masuk</button></form><p class="msg" id="msg" role="status"></p>
+    <p class="hint">PIN pemilik bisa mengelola profil anak. PIN pengisi bisa menambah catatan. Tanpa PIN, aplikasi tetap bisa dilihat.</p></div></section>`;
   $("l-pin").focus();
   $("lform").onsubmit=async ev=>{ev.preventDefault();const p=$("l-pin").value.trim();if(!p){showMsg("Isi PIN dulu.",true);return}
     const b=$("lBtn");b.disabled=true;b.textContent="Memeriksa…";
@@ -251,7 +299,7 @@ function renderLogin(){
       pin=p;try{localStorage.setItem("rbt-pin",p)}catch(e){}applyData(d);go({name:"dash"})}
     catch(e){b.disabled=false;b.textContent="Masuk";showMsg(errText(e),true)}}
 }
-function navHTML(a){return ("<nav class=\"nav\" aria-label=\"Menu utama\"><button type=\"button\" data-v=\"dash\""+(a==="dash"?' aria-current="page"':"")+">Dasbor</button><button type=\"button\" data-v=\"home\""+(a==="home"?' aria-current="page"':"")+">Profil Anak</button></nav>")}
+function navHTML(a){return `<nav class="nav" aria-label="Menu utama"><button type="button" data-v="dash"${a==="dash"?' aria-current="page"':""}>Dasbor</button><button type="button" data-v="home"${a==="home"?' aria-current="page"':""}>Profil Anak</button>${isOwner?`<button type="button" data-v="biaya"${a==="biaya"?' aria-current="page"':""}>Pengeluaran</button>`:""}<button type="button" data-v="lap"${a==="lap"?' aria-current="page"':""}>Laporan</button></nav>`}
 function bindNav(){$("top").querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go({name:b.dataset.v}))}
 const KCOL=["var(--court)","var(--cork)","var(--k3)","var(--k4)"];
 function kidColor(id){const i=sortedKids().findIndex(([k])=>k===id);return KCOL[(i<0?0:i)%KCOL.length]}
@@ -259,18 +307,26 @@ function kidColor(id){const i=sortedKids().findIndex(([k])=>k===id);return KCOL[
 /* ---------- Dasbor ---------- */
 function inRange(e){if(!dashRange)return true;const d=new Date((e.tanggal||"")+"T00:00:00");return (Date.now()-d.getTime())/864e5<=dashRange}
 function renderDash(){
-  $("top").innerHTML=(""+(whoBar())+"<h1>Rapor Bulu Tangkis Nolan's Club</h1><p class=\"sub\">Gambaran perkembangan semua anak.</p>"+(navHTML("dash")));bindNav();bindWho();
-  if(loadErr){$("view").innerHTML=("<section><div class=\"empty\">"+(esc(loadErr))+"</div></section>");return}
-  if(!ready){$("view").innerHTML="<div class=\"empty\" style=\"margin-top:20px\">Memuat dasbor…</div>";return}
+  $("top").innerHTML=`${whoBar()}<h1>Rapor Bulu Tangkis Nolan's Club</h1><p class="sub">Gambaran perkembangan semua anak.</p>${navHTML("dash")}`;bindNav();bindWho();
+  if(loadErr){$("view").innerHTML=`<section><div class="empty">${esc(loadErr)}</div></section>`;return}
+  if(!ready){$("view").innerHTML=`<div class="empty" style="margin-top:20px">Memuat dasbor…</div>`;return}
   const ks=sortedKids();
-  if(!ks.length){$("view").innerHTML=("<section><div class=\"empty\">Belum ada profil anak."+(isOwner?" Tambahkan lewat menu <b>Profil Anak</b>.":"")+"</div></section>");return}
+  if(!ks.length){$("view").innerHTML=`<section><div class="empty">Belum ada profil anak.${isOwner?" Tambahkan lewat menu <b>Profil Anak</b>.":""}</div></section>`;return}
   const E=entries.filter(e=>kids[e.anak]&&inRange(e));
   const tr=E.filter(e=>e.jenis==="train"),ma=E.filter(e=>e.jenis==="match"),co=E.filter(e=>e.jenis==="coach"),ru=E.filter(e=>e.jenis==="run");
   const km=ru.reduce((a,e)=>a+(+e.jarak||0),0);
   let sw=0,sl=0;ma.forEach(e=>{const i=matchInfo(e);sw+=i.w;sl+=i.l});
   const ph=E.reduce((n,e)=>n+(Array.isArray(e.foto)?e.foto.length:0),0);
   const rl=dashRange===30?"30 hari terakhir":dashRange===90?"3 bulan terakhir":"sejak awal";
-  let h=("<div class=\"range\" role=\"group\" aria-label=\"Periode\">"+([[30,"30 hari"],[90,"3 bulan"],[0,"Semua"]].map(([v,n])=>("<button type=\"button\" class=\"tab\" data-r=\""+(v)+"\" aria-selected=\""+(v===dashRange)+"\">"+(n)+"</button>")).join(""))+"</div>\n  <section style=\"margin-top:14px\"><h2>Ringkasan · "+(rl)+"</h2><div class=\"tiles\">\n    <div class=\"tile\"><b>"+(tr.length)+"</b><span>Catatan latihan</span></div>\n    <div class=\"tile\"><b>"+(co.length)+"</b><span>Masukan pelatih</span></div>\n    <div class=\"tile\"><b>"+(ma.length)+"</b><span>Pertandingan</span><small>"+(sw)+" set menang · "+(sl)+" set kalah</small></div>\n    <div class=\"tile\"><b>"+(ru.length)+"</b><span>Sesi lari</span><small>Total "+(fmtKm(km))+" km</small></div>\n    <div class=\"tile\"><b>"+(E.filter(e=>e.jenis==="skill").length)+"</b><span>Penilaian keterampilan</span></div>\n    <div class=\"tile\"><b>"+(ph)+"</b><span>Foto momen</span></div></div></section>");
+  let h=`<div class="range" role="group" aria-label="Periode">${[[30,"30 hari"],[90,"3 bulan"],[0,"Semua"]].map(([v,n])=>`<button type="button" class="tab" data-r="${v}" aria-selected="${v===dashRange}">${n}</button>`).join("")}</div>
+  <section style="margin-top:14px"><h2>Ringkasan · ${rl}</h2><div class="tiles">
+    <div class="tile"><b>${tr.length}</b><span>Catatan latihan</span></div>
+    <div class="tile"><b>${co.length}</b><span>Masukan pelatih</span></div>
+    <div class="tile"><b>${ma.length}</b><span>Pertandingan</span><small>${sw} set menang · ${sl} set kalah</small></div>
+    <div class="tile"><b>${ru.length}</b><span>Sesi lari</span><small>Total ${fmtKm(km)} km</small></div>
+    <div class="tile"><b>${E.filter(e=>e.jenis==="skill").length}</b><span>Penilaian keterampilan</span></div>
+    <div class="tile"><b>${ph}</b><span>Foto momen</span></div>
+    ${isOwner?(()=>{const mk=today().slice(0,7),t=biaya.filter(x=>(x.tanggal||"").startsWith(mk)).reduce((a,x)=>a+(+x.jumlah||0),0);return `<div class="tile" style="grid-column:1/-1"><b class="money" style="font-size:1.5rem">${rp(t)}</b><span>Pengeluaran bulan ini · hanya terlihat oleh Anda</span></div>`})():""}</div></section>`;
 
   /* aktivitas per minggu */
   const nW=dashRange===30?5:dashRange===90?13:16,now=new Date();now.setHours(0,0,0,0);
@@ -280,44 +336,54 @@ function renderDash(){
   entries.filter(e=>kids[e.anak]).forEach(e=>{const d=new Date((e.tanggal||"")+"T00:00:00");for(let i=weeks.length-1;i>=0;i--){if(d>=weeks[i]){const n=new Date(weeks[i]);n.setDate(n.getDate()+7);if(d<n)cnt[i][e.anak]=(cnt[i][e.anak]||0)+1;break}}});
   const tot=cnt.map(c=>Object.values(c).reduce((a,b)=>a+b,0));let mx=Math.max(4,...tot);mx=Math.ceil(mx/2)*2;
   const W=340,H=170,L=26,R=6,T=10,B=24,pw=W-L-R,ph2=H-T-B,bw=Math.max(6,Math.min(22,pw/nW*0.62));
-  let g=("<svg class=\"chart\" viewBox=\"0 0 "+(W)+" "+(H)+"\" role=\"img\" aria-label=\"Jumlah catatan per minggu\">");
-  [0,mx/2,mx].forEach(v=>{const y=T+ph2-(v/mx)*ph2;g+=("<line x1=\""+(L)+"\" x2=\""+(W-R)+"\" y1=\""+(y)+"\" y2=\""+(y)+"\" stroke=\"var(--line)\"/><text x=\""+(L-5)+"\" y=\""+(y+4)+"\" text-anchor=\"end\" font-size=\"10\" fill=\"var(--muted)\" font-family=\"Nunito Sans,system-ui\">"+(v)+"</text>")});
+  let g=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Jumlah catatan per minggu">`;
+  [0,mx/2,mx].forEach(v=>{const y=T+ph2-(v/mx)*ph2;g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-5}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Nunito Sans,system-ui">${v}</text>`});
   weeks.forEach((w,i)=>{const cx=L+pw*(i+.5)/nW;let y=T+ph2;
-    ks.forEach(([id])=>{const c=cnt[i][id]||0;if(!c)return;const hh=c/mx*ph2;y-=hh;g+=("<rect x=\""+(cx-bw/2)+"\" y=\""+(y)+"\" width=\""+(bw)+"\" height=\""+(hh)+"\" fill=\""+(kidColor(id))+"\"><title>"+(esc(kids[id].nama))+": "+(c)+" catatan</title></rect>")});
-    if(i%Math.ceil(nW/6)===0||i===nW-1)g+=("<text x=\""+(cx)+"\" y=\""+(H-7)+"\" text-anchor=\"middle\" font-size=\"9.5\" fill=\"var(--muted)\" font-family=\"Nunito Sans,system-ui\">"+(w.getDate())+"/"+(w.getMonth()+1)+"</text>")});
+    ks.forEach(([id])=>{const c=cnt[i][id]||0;if(!c)return;const hh=c/mx*ph2;y-=hh;g+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${hh}" fill="${kidColor(id)}"><title>${esc(kids[id].nama)}: ${c} catatan</title></rect>`});
+    if(i%Math.ceil(nW/6)===0||i===nW-1)g+=`<text x="${cx}" y="${H-7}" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="Nunito Sans,system-ui">${w.getDate()}/${w.getMonth()+1}</text>`});
   g+="</svg>";
-  h+=("<section><h2>Aktivitas per Minggu</h2><div class=\"panel\">"+(g)+"<div class=\"legend\">"+(ks.map(([id,k])=>("<span><i style=\"background:"+(kidColor(id))+"\"></i>"+(esc(k.nama))+"</span>")).join(""))+"</div>\n    <p class=\"hint\">Jumlah semua catatan tiap minggu (tanggal = awal minggu, Senin).</p></div></section>");
+  h+=`<section><h2>Aktivitas per Minggu</h2><div class="panel">${g}<div class="legend">${ks.map(([id,k])=>`<span><i style="background:${kidColor(id)}"></i>${esc(k.nama)}</span>`).join("")}</div>
+    <p class="hint">Jumlah semua catatan tiap minggu (tanggal = awal minggu, Senin).</p></div></section>`;
 
   /* kartu per anak */
-  h+=("<section><h2>Per Anak</h2><div class=\"kcards\">"+(ks.map(([id,k])=>{
+  h+=`<section><h2>Per Anak</h2><div class="kcards">${ks.map(([id,k])=>{
     const m=E.filter(e=>e.anak===id),mt=m.filter(e=>e.jenis==="match").sort((a,b)=>(a.tanggal||"").localeCompare(b.tanggal||""));
     let mw=0,ml=0;mt.forEach(e=>{const i=matchInfo(e);if(i.won===true)mw++;else if(i.won===false)ml++});
     const gaps=mt.map(e=>matchInfo(e)).filter(i=>i.sets.length).map(i=>Math.round(i.gap/i.sets.length));
-    const gapTxt=gaps.length>=2?(""+(gaps[0]>0?"+":"")+(gaps[0])+" → "+(gaps[gaps.length-1]>0?"+":"")+(gaps[gaps.length-1])):gaps.length?(""+(gaps[0]>0?"+":"")+(gaps[0])):"–";
+    const gapTxt=gaps.length>=2?`${gaps[0]>0?"+":""}${gaps[0]} → ${gaps[gaps.length-1]>0?"+":""}${gaps[gaps.length-1]}`:gaps.length?`${gaps[0]>0?"+":""}${gaps[0]}`:"–";
     const sk=entries.filter(e=>e.anak===id&&e.jenis==="skill").sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""));
     const avg=n=>{const v=Object.values(n||{}).map(Number).filter(Boolean);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0};
     const a1=sk[0]?avg(sk[0].nilai):0,a0=sk[1]?avg(sk[1].nilai):0;
-    const skTxt=a1?(""+(a1.toFixed(1))+"/5"+(a0?(" "+(a1>a0?"▲":a1<a0?"▼":"=")):"")):"–";
+    const skTxt=a1?`${a1.toFixed(1)}/5${a0?` ${a1>a0?"▲":a1<a0?"▼":"="}`:""}`:"–";
     const lt=entries.filter(e=>e.anak===id&&e.jenis==="train").sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""))[0];
-    return ("<button type=\"button\" class=\"kc\" data-id=\""+(esc(id))+"\" style=\"--kc:"+(kidColor(id))+"\">"+(avatarHTML(k))+"<span style=\"min-width:0\"><span class=\"nm\">"+(esc(k.nama))+"</span>\n      <span class=\"kgrid\"><span>Latihan</span><b>"+(m.filter(e=>e.jenis==="train").length)+"×</b>\n      <span>Pertandingan</span><b>"+(mt.length?(""+(mw)+" M · "+(ml)+" K"):"–")+"</b>\n      <span>Selisih poin/set</span><b>"+(gapTxt)+"</b>\n      <span>Rata-rata keterampilan</span><b>"+(skTxt)+"</b>\n      <span>Lari terakhir</span><b>"+((()=>{const r=entries.filter(e=>e.anak===id&&e.jenis==="run").sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""))[0];return r?(""+(fmtKm(r.jarak))+" km"+(paceOf(r)?(" · "+(fmtDur(paceOf(r)))+"/km"):"")):"–"})())+"</b>\n      <span>Suasana terakhir</span><b>"+(lt&&lt.mood?esc(lt.mood):"–")+"</b></span></span></button>")}).join(""))+"</div>\n    <p class=\"hint\">Selisih poin per set dari pertandingan pertama ke terakhir dalam periode ini. Makin mendekati nol berarti makin seimbang dengan lawan.</p></section>");
+    return `<button type="button" class="kc" data-id="${esc(id)}" style="--kc:${kidColor(id)}">${avatarHTML(k)}<span style="min-width:0"><span class="nm">${esc(k.nama)}</span>
+      <span class="kgrid"><span>Latihan</span><b>${m.filter(e=>e.jenis==="train").length}×</b>
+      <span>Pertandingan</span><b>${mt.length?`${mw} M · ${ml} K`:"–"}</b>
+      <span>Selisih poin/set</span><b>${gapTxt}</b>
+      <span>Rata-rata keterampilan</span><b>${skTxt}</b>
+      <span>Lari terakhir</span><b>${(()=>{const r=entries.filter(e=>e.anak===id&&e.jenis==="run").sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""))[0];return r?`${fmtKm(r.jarak)} km${paceOf(r)?` · ${fmtDur(paceOf(r))}/km`:""}`:"–"})()}</b>
+      <span>Suasana terakhir</span><b>${lt&&lt.mood?esc(lt.mood):"–"}</b></span></span></button>`}).join("")}</div>
+    <p class="hint">Selisih poin per set dari pertandingan pertama ke terakhir dalam periode ini. Makin mendekati nol berarti makin seimbang dengan lawan.</p></section>`;
 
   /* suasana hati */
   const MO=[["Semangat","var(--win)"],["Biasa","var(--calm)"],["Lelah","var(--cork)"],["Malas","var(--lose)"]];
   const warn=[];
-  const rows=ks.map(([id,k])=>{const t=tr.filter(e=>e.anak===id&&e.mood);if(!t.length)return ("<div class=\"mrow\"><span>"+(esc(k.nama))+"</span><span class=\"hint\" style=\"margin:0\">Belum ada data</span></div>");
+  const rows=ks.map(([id,k])=>{const t=tr.filter(e=>e.anak===id&&e.mood);if(!t.length)return `<div class="mrow"><span>${esc(k.nama)}</span><span class="hint" style="margin:0">Belum ada data</span></div>`;
     const c={};t.forEach(e=>c[e.mood]=(c[e.mood]||0)+1);const bad=(c.Lelah||0)+(c.Malas||0);if(t.length>=3&&bad/t.length>=.4)warn.push(k.nama);
-    return ("<div class=\"mrow\"><span>"+(esc(k.nama))+"</span><span class=\"mbar\" role=\"img\" aria-label=\""+(MO.map(([n])=>c[n]?(""+(n)+" "+(c[n])):"").filter(Boolean).join(", "))+"\">"+(MO.map(([n,col])=>c[n]?("<i style=\"width:"+(c[n]/t.length*100)+"%;background:"+(col)+"\" title=\""+(n)+": "+(c[n])+"\"></i>"):"").join(""))+"</span></div>")}).join("");
-  h+=("<section><h2>Suasana Hati Saat Latihan</h2><div class=\"panel\"><div class=\"moods\">"+(rows)+"</div>\n    <div class=\"legend\">"+(MO.map(([n,c])=>("<span><i style=\"background:"+(c)+"\"></i>"+(n)+"</span>")).join(""))+"</div>\n    "+(warn.length?("<div class=\"alert\"><b>Perlu diperhatikan:</b> "+(warn.map(esc).join(", "))+" cukup sering lelah atau malas belakangan ini. Mungkin perlu hari istirahat atau obrolan santai dengan pelatih.</div>"):"")+"</div></section>");
+    return `<div class="mrow"><span>${esc(k.nama)}</span><span class="mbar" role="img" aria-label="${MO.map(([n])=>c[n]?`${n} ${c[n]}`:"").filter(Boolean).join(", ")}">${MO.map(([n,col])=>c[n]?`<i style="width:${c[n]/t.length*100}%;background:${col}" title="${n}: ${c[n]}"></i>`:"").join("")}</span></div>`}).join("");
+  h+=`<section><h2>Suasana Hati Saat Latihan</h2><div class="panel"><div class="moods">${rows}</div>
+    <div class="legend">${MO.map(([n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div>
+    ${warn.length?`<div class="alert"><b>Perlu diperhatikan:</b> ${warn.map(esc).join(", ")} cukup sering lelah atau malas belakangan ini. Mungkin perlu hari istirahat atau obrolan santai dengan pelatih.</div>`:""}</div></section>`;
 
   /* target pelatih */
   const tg=ks.map(([id,k])=>{const c=entries.filter(e=>e.anak===id&&e.jenis==="coach"&&e.target).sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""))[0];
-    return c?("<div><b>"+(esc(k.nama))+" · "+(fmtDate(c.tanggal))+"</b>"+(esc(c.target))+"</div>"):""}).filter(Boolean);
-  h+=("<section><h2>Target dari Pelatih</h2><div class=\"panel\">"+(tg.length?("<div class=\"tg\">"+(tg.join(""))+"</div>"):"<div class=\"empty\">Belum ada target. Isi lewat catatan <b>Masukan Pelatih</b>.</div>")+"</div></section>");
+    return c?`<div><b>${esc(k.nama)} · ${fmtDate(c.tanggal)}</b>${esc(c.target)}</div>`:""}).filter(Boolean);
+  h+=`<section><h2>Target dari Pelatih</h2><div class="panel">${tg.length?`<div class="tg">${tg.join("")}</div>`:`<div class="empty">Belum ada target. Isi lewat catatan <b>Masukan Pelatih</b>.</div>`}</div></section>`;
 
   /* aktivitas terbaru */
   const rec=entries.filter(e=>kids[e.anak]).sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||"")||(b.dibuat||0)-(a.dibuat||0)).slice(0,6);
-  const what=e=>e.jenis==="match"?(""+(esc(e.turnamen||"Pertandingan"))+" · "+(parseSets(e.skor).map(s=>s.join("–")).join(", "))):e.jenis==="train"?("Latihan: "+(esc(e.fokus||e.catatan||""))):e.jenis==="coach"?("Pelatih: "+(esc(e.masukan))):e.jenis==="run"?("Lari "+(fmtKm(e.jarak))+" km"+(e.detik?(" dalam "+(fmtDur(e.detik))):"")):"Nilai keterampilan diperbarui";
-  h+=("<section><h2>Catatan Terbaru</h2><div class=\"panel\">"+(rec.length?("<div class=\"feed\">"+(rec.map(e=>("<div class=\"fi\"><span class=\"who\" style=\"color:"+(kidColor(e.anak))+"\">"+(esc(kids[e.anak].nama))+"</span><span class=\"what\">"+(what(e))+"</span><span class=\"when\">"+(fmtDate(e.tanggal))+"</span></div>")).join(""))+"</div>"):"<div class=\"empty\">Belum ada catatan.</div>")+"</div></section>");
+  const what=e=>e.jenis==="match"?`${esc(e.turnamen||"Pertandingan")} · ${parseSets(e.skor).map(s=>s.join("–")).join(", ")}`:e.jenis==="train"?`Latihan: ${esc(e.fokus||e.catatan||"")}`:e.jenis==="coach"?`Pelatih: ${esc(e.masukan)}`:e.jenis==="run"?`Lari ${fmtKm(e.jarak)} km${e.detik?` dalam ${fmtDur(e.detik)}`:""}`:"Nilai keterampilan diperbarui";
+  h+=`<section><h2>Catatan Terbaru</h2><div class="panel">${rec.length?`<div class="feed">${rec.map(e=>`<div class="fi"><span class="who" style="color:${kidColor(e.anak)}">${esc(kids[e.anak].nama)}</span><span class="what">${what(e)}</span><span class="when">${fmtDate(e.tanggal)}</span></div>`).join("")}</div>`:`<div class="empty">Belum ada catatan.</div>`}</div></section>`;
 
   $("view").innerHTML=h;
   $("view").querySelectorAll(".range .tab").forEach(b=>b.onclick=()=>{dashRange=+b.dataset.r;renderDash()});
@@ -333,47 +399,69 @@ document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&!$("lb").hidden)$
 /* ---------- Router ---------- */
 function render(){
   if(view.name==="kid"&&!kids[view.id]){
-    if(!ready){$("top").innerHTML="<h1>Rapor Bulu Tangkis Nolan's Club</h1>";$("view").innerHTML="<div class=\"empty\" style=\"margin-top:20px\">Memuat profil…</div>";return}
+    if(!ready){$("top").innerHTML=`<h1>Rapor Bulu Tangkis Nolan's Club</h1>`;$("view").innerHTML=`<div class="empty" style="margin-top:20px">Memuat profil…</div>`;return}
     view={name:"home"}}
   if(view.name==="kidform"&&!isOwner)view={name:"home"};
+  if(view.name==="biaya"&&ready&&!isOwner)view={name:"dash"};
   if(view.name==="login")return renderLogin();
-  if(view.name==="dash")renderDash();else if(view.name==="home")renderHome();else if(view.name==="kid")renderKid();else renderKidForm();
+  if(view.name==="lap")renderLap();else if(view.name==="biaya")renderBiaya();else if(view.name==="dash")renderDash();else if(view.name==="home")renderHome();else if(view.name==="kid")renderKid();else renderKidForm();
 }
 
 /* ---------- Beranda ---------- */
 function renderHome(){
-  $("top").innerHTML=(""+(whoBar())+"<h1>Rapor Bulu Tangkis Nolan's Club</h1><p class=\"sub\">Catatan perkembangan anak, diisi tiap akhir pekan.</p>"+(navHTML("home")));bindNav();bindWho();
+  $("top").innerHTML=`${whoBar()}<h1>Rapor Bulu Tangkis Nolan's Club</h1><p class="sub">Catatan perkembangan anak, diisi tiap akhir pekan.</p>${navHTML("home")}`;bindNav();bindWho();
   const list=sortedKids();
   const ex=isOwner&&entries.some(e=>e.contoh);
-  const role=ready&&db?("<p class=\"hint\" style=\"margin-top:14px\">"+(isOwner?"Anda pemilik: bisa mengelola profil dan semua catatan.":writable?"Anda bisa melihat profil dan menambah catatan. Profil hanya bisa diubah oleh pemilik.":"Anda sedang melihat. Masuk dengan PIN untuk menambah catatan.")+"</p>"):"";
-  $("view").innerHTML=(""+(role)+(ex?exbarHTML():"")+"<section><h2>Profil Anak</h2><div class=\"cards\" id=\"cards\">"+(
-    !ready?"<div class=\"empty\">Memuat profil…</div>":
+  const role=ready&&db?`<p class="hint" style="margin-top:14px">${isOwner?"Anda pemilik: bisa mengelola profil dan semua catatan.":writable?"Anda bisa melihat profil dan menambah catatan. Profil hanya bisa diubah oleh pemilik.":"Anda sedang melihat. Masuk dengan PIN untuk menambah catatan."}</p>`:"";
+  $("view").innerHTML=`${role}${ex?exbarHTML():""}<section><h2>Profil Anak</h2><div class="cards" id="cards">${
+    !ready?`<div class="empty">Memuat profil…</div>`:
     list.length?list.map(([id,k])=>{const m=of(id);const nm=m.filter(e=>e.jenis==="match").length,nt=m.filter(e=>e.jenis==="train").length;
       const last=m.map(e=>e.tanggal||"").sort().pop();
-      return ("<button type=\"button\" class=\"card\" data-id=\""+(esc(id))+"\">"+(avatarHTML(k))+"<span style=\"min-width:0\"><span class=\"nm\">"+(esc(k.nama))+"</span>\n        <span class=\"meta\" style=\"display:block\">"+(k.lahir?("Usia ±"+(YEAR-k.lahir)+" th"):"")+(k.klub?(" · "+(esc(k.klub))):"")+"</span>\n        <span class=\"nums\"><span><b>"+(nm)+"</b>pertandingan</span><span><b>"+(nt)+"</b>latihan</span></span>\n        "+(last?("<span class=\"meta\" style=\"display:block\">Catatan terakhir "+(fmtDate(last))+"</span>"):"")+"</span><span class=\"go\" aria-hidden=\"true\">›</span></button>")}).join(""):
-    "<div class=\"empty\">Belum ada profil anak. Mulai dengan menambahkan profil pertama.</div>"
-  )+"</div></section>"+(isOwner&&ready&&db?"<section style=\"margin-top:12px\"><button type=\"button\" class=\"addcard\" id=\"addKid\">+ Tambah profil anak</button></section>":"")+"\n  "+(!db&&ready?"<p class=\"hint\">Penyimpanan tidak tersedia di tampilan ini. Buka halaman ini dari akun Claude Anda.</p>":""));
+      return `<button type="button" class="card" data-id="${esc(id)}">${avatarHTML(k)}<span style="min-width:0"><span class="nm">${esc(k.nama)}</span>
+        <span class="meta" style="display:block">${k.lahir?`Usia ±${YEAR-k.lahir} th`:""}${k.klub?` · ${esc(k.klub)}`:""}</span>
+        <span class="nums"><span><b>${nm}</b>pertandingan</span><span><b>${nt}</b>latihan</span></span>
+        ${last?`<span class="meta" style="display:block">Catatan terakhir ${fmtDate(last)}</span>`:""}</span><span class="go" aria-hidden="true">›</span></button>`}).join(""):
+    `<div class="empty">Belum ada profil anak. Mulai dengan menambahkan profil pertama.</div>`
+  }</div></section>${isOwner&&ready&&db?`<section style="margin-top:12px"><button type="button" class="addcard" id="addKid">+ Tambah profil anak</button></section>`:""}
+  ${!db&&ready?`<p class="hint">Penyimpanan tidak tersedia di tampilan ini. Buka halaman ini dari akun Claude Anda.</p>`:""}`;
   $("view").querySelectorAll(".card").forEach(c=>c.onclick=()=>go({name:"kid",id:c.dataset.id}));
   if($("addKid"))$("addKid").onclick=()=>go({name:"kidform",id:null});
   bindExbar();
 }
-function exbarHTML(){return "<div class=\"exbar\" id=\"exbar\"><span>Ada catatan <b>contoh</b> untuk melihat cara kerjanya.</span><button type=\"button\" id=\"clearEx\">Hapus semua contoh</button></div>"}
+function exbarHTML(){return `<div class="exbar" id="exbar"><span>Ada catatan <b>contoh</b> untuk melihat cara kerjanya.</span><button type="button" id="clearEx">Hapus semua contoh</button></div>`}
 function bindExbar(){const b=$("clearEx");if(!b)return;b.onclick=async()=>{
   if(!b.dataset.arm){b.dataset.arm="1";b.textContent="Yakin? Ketuk lagi";setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent="Hapus semua contoh"}},3500);return}
-  b.disabled=true;for(const e of entries.filter(x=>x.contoh)){try{await db.collection("catatan").doc(e.id).delete()}catch(err){}}}}
+  b.disabled=true;for(const e of entries.filter(x=>x.contoh)){try{await db.collection("catatan").doc(e.id).delete()}catch(err){}}
+  for(const x of biaya.filter(x=>x.contoh)){try{await db.collection("pengeluaran").doc(x.id).delete()}catch(err){}}}}
 
 /* ---------- Formulir profil ---------- */
 function renderKidForm(){
   const id=view.id,k=id?kids[id]:{};avatarPending&&URL.revokeObjectURL(avatarPending.url);avatarPending=null;avatarRemove=false;
-  $("top").innerHTML=("<div class=\"toprow\"><button type=\"button\" class=\"back\" id=\"back\">‹ Kembali</button></div><h1 style=\"margin-top:12px\">"+(id?"Ubah Profil":"Profil Baru")+"</h1>");
+  $("top").innerHTML=`<div class="toprow"><button type="button" class="back" id="back">‹ Kembali</button></div><h1 style="margin-top:12px">${id?"Ubah Profil":"Profil Baru"}</h1>`;
   $("back").onclick=()=>go(id?{name:"kid",id}:{name:"home"});
   const n=id?of(id).length:0;
-  $("view").innerHTML=("<section><div class=\"panel\"><form id=\"kform\" novalidate>\n    <div class=\"avpick\"><span id=\"avprev\">"+(avatarHTML(k.nama?k:{nama:"?"}))+"</span>\n      "+(assets?("<div style=\"display:grid;gap:6px\"><button type=\"button\" class=\"pickbtn\" id=\"avBtn\">"+(okId(k.foto)?"Ganti foto profil":"+ Foto profil")+"</button>\n      "+(okId(k.foto)?"<button type=\"button\" class=\"del\" id=\"avDel\" style=\"justify-self:start\">Hapus foto</button>":"")+"<input type=\"file\" id=\"k-foto\" accept=\"image/*\" hidden></div>"):"")+"</div>\n    <label>Nama panggilan <span class=\"req\">*</span><input id=\"k-nama\" maxlength=\"40\" value=\""+(esc(k.nama||""))+"\" placeholder=\"mis. Raka\"></label>\n    <div class=\"row\"><label>Tahun lahir <span class=\"req\">*</span><input id=\"k-lahir\" type=\"number\" inputmode=\"numeric\" min=\"1990\" max=\""+(YEAR)+"\" value=\""+(esc(k.lahir||""))+"\" placeholder=\"2014\"></label>\n      <label>Jenis kelamin<select id=\"k-jk\"><option value=\"\">—</option><option"+(k.jk==="Putra"?" selected":"")+">Putra</option><option"+(k.jk==="Putri"?" selected":"")+">Putri</option></select></label></div>\n    <div class=\"row\"><label>Tangan dominan<select id=\"k-tangan\"><option value=\"\">—</option><option"+(k.tangan==="Kanan"?" selected":"")+">Kanan</option><option"+(k.tangan==="Kiri"?" selected":"")+">Kiri</option></select></label>\n      <label>Mulai latihan<input id=\"k-mulai\" type=\"month\" value=\""+(esc(k.mulai||""))+"\"></label></div>\n    <div class=\"row\"><label>Klub / PB<input id=\"k-klub\" maxlength=\"60\" value=\""+(esc(k.klub||""))+"\" placeholder=\"mis. PB Garuda\"></label>\n      <label>Nama pelatih<input id=\"k-pelatih\" maxlength=\"60\" value=\""+(esc(k.pelatih||""))+"\"></label></div>\n    <label>Jadwal latihan<input id=\"k-jadwal\" maxlength=\"80\" value=\""+(esc(k.jadwal||""))+"\" placeholder=\"mis. Setiap hari, 15.30–17.30\"></label>\n    <label>Tujuan / harapan<textarea id=\"k-tujuan\" placeholder=\"mis. Menikmati latihan dan ikut 3 turnamen tahun ini\">"+(esc(k.tujuan||""))+"</textarea></label>\n    <div class=\"btnrow\"><button type=\"button\" class=\"ghost\" id=\"kCancel\">Batal</button><button type=\"submit\" class=\"primary\" id=\"kSave\">"+(id?"Simpan perubahan":"Tambah profil")+"</button></div>\n    "+(id?("<div class=\"dz\"><p><b>Hapus profil</b><br><span class=\"hint\" style=\"margin:0\">Menghapus profil ini juga menghapus "+(n)+" catatan dan foto miliknya. Tidak bisa dibatalkan.</span></p>\n      <button type=\"button\" class=\"danger\" id=\"kDel\">Hapus profil "+(esc(k.nama))+"</button></div>"):"")+"\n  </form><p class=\"msg\" id=\"msg\" role=\"status\"></p></div></section>");
+  $("view").innerHTML=`<section><div class="panel"><form id="kform" novalidate>
+    <div class="avpick"><span id="avprev">${avatarHTML(k.nama?k:{nama:"?"})}</span>
+      ${assets?`<div style="display:grid;gap:6px"><button type="button" class="pickbtn" id="avBtn">${okId(k.foto)?"Ganti foto profil":"+ Foto profil"}</button>
+      ${okId(k.foto)?`<button type="button" class="del" id="avDel" style="justify-self:start">Hapus foto</button>`:""}<input type="file" id="k-foto" accept="image/*" hidden></div>`:""}</div>
+    <label>Nama panggilan <span class="req">*</span><input id="k-nama" maxlength="40" value="${esc(k.nama||"")}" placeholder="mis. Raka"></label>
+    <div class="row"><label>Tahun lahir <span class="req">*</span><input id="k-lahir" type="number" inputmode="numeric" min="1990" max="${YEAR}" value="${esc(k.lahir||"")}" placeholder="2014"></label>
+      <label>Jenis kelamin<select id="k-jk"><option value="">—</option><option${k.jk==="Putra"?" selected":""}>Putra</option><option${k.jk==="Putri"?" selected":""}>Putri</option></select></label></div>
+    <div class="row"><label>Tangan dominan<select id="k-tangan"><option value="">—</option><option${k.tangan==="Kanan"?" selected":""}>Kanan</option><option${k.tangan==="Kiri"?" selected":""}>Kiri</option></select></label>
+      <label>Mulai latihan<input id="k-mulai" type="month" value="${esc(k.mulai||"")}"></label></div>
+    <div class="row"><label>Klub / PB<input id="k-klub" maxlength="60" value="${esc(k.klub||"")}" placeholder="mis. PB Garuda"></label>
+      <label>Nama pelatih<input id="k-pelatih" maxlength="60" value="${esc(k.pelatih||"")}"></label></div>
+    <label>Jadwal latihan<input id="k-jadwal" maxlength="80" value="${esc(k.jadwal||"")}" placeholder="mis. Setiap hari, 15.30–17.30"></label>
+    <label>Tujuan / harapan<textarea id="k-tujuan" placeholder="mis. Menikmati latihan dan ikut 3 turnamen tahun ini">${esc(k.tujuan||"")}</textarea></label>
+    <div class="btnrow"><button type="button" class="ghost" id="kCancel">Batal</button><button type="submit" class="primary" id="kSave">${id?"Simpan perubahan":"Tambah profil"}</button></div>
+    ${id?`<div class="dz"><p><b>Hapus profil</b><br><span class="hint" style="margin:0">Menghapus profil ini juga menghapus ${n} catatan dan foto miliknya. Tidak bisa dibatalkan.</span></p>
+      <button type="button" class="danger" id="kDel">Hapus profil ${esc(k.nama)}</button></div>`:""}
+  </form><p class="msg" id="msg" role="status"></p></div></section>`;
   $("kCancel").onclick=()=>$("back").click();
   if($("avBtn")){$("avBtn").onclick=()=>$("k-foto").click();
     $("k-foto").onchange=ev=>{const f=ev.target.files[0];ev.target.value="";if(!f||!/^image\//.test(f.type))return;avatarPending&&URL.revokeObjectURL(avatarPending.url);
-      avatarPending={file:f,url:URL.createObjectURL(f)};avatarRemove=false;$("avprev").innerHTML=("<span class=\"avatar\"><img src=\""+(avatarPending.url)+"\" alt=\"\"></span>")}}
-  if($("avDel"))$("avDel").onclick=()=>{avatarRemove=true;avatarPending=null;$("avprev").innerHTML=("<span class=\"avatar\">"+(esc(initials($("k-nama").value||k.nama)))+"</span>");$("avDel").hidden=true};
+      avatarPending={file:f,url:URL.createObjectURL(f)};avatarRemove=false;$("avprev").innerHTML=`<span class="avatar"><img src="${avatarPending.url}" alt=""></span>`}}
+  if($("avDel"))$("avDel").onclick=()=>{avatarRemove=true;avatarPending=null;$("avprev").innerHTML=`<span class="avatar">${esc(initials($("k-nama").value||k.nama))}</span>`;$("avDel").hidden=true};
   $("kform").onsubmit=async ev=>{ev.preventDefault();
     const nama=$("k-nama").value.trim(),lahir=+$("k-lahir").value;
     if(!nama){showMsg("Isi nama panggilan dulu.",true);$("k-nama").focus();return}
@@ -398,11 +486,25 @@ function renderKidForm(){
 /* ---------- Halaman profil ---------- */
 function renderKid(){
   const id=view.id,k=kids[id];
-  const facts=[k.lahir&&("Lahir "+(k.lahir)+" · ±"+(YEAR-k.lahir)+" th"),k.jk,k.tangan&&("Tangan "+(k.tangan.toLowerCase())),k.mulai&&("Mulai "+(fmtMonth(k.mulai))),k.klub,k.pelatih&&("Pelatih: "+(k.pelatih)),k.jadwal].filter(Boolean);
-  $("top").innerHTML=("<div class=\"toprow\"><button type=\"button\" class=\"back\" id=\"back\">‹ Semua anak</button></div>\n    <div class=\"idcard\">"+(avatarHTML(k))+"<div style=\"min-width:0\"><h1>"+(esc(k.nama))+"</h1><div class=\"facts\">"+(facts.map(f=>("<span class=\"fact\">"+(esc(f))+"</span>")).join(""))+"</div>\n    "+(isOwner&&db?"<button type=\"button\" class=\"editbtn\" id=\"editKid\">Ubah profil</button>":"")+"</div></div>");
+  const facts=[k.lahir&&`Lahir ${k.lahir} · ±${YEAR-k.lahir} th`,k.jk,k.tangan&&`Tangan ${k.tangan.toLowerCase()}`,k.mulai&&`Mulai ${fmtMonth(k.mulai)}`,k.klub,k.pelatih&&`Pelatih: ${k.pelatih}`,k.jadwal].filter(Boolean);
+  $("top").innerHTML=`<div class="toprow"><button type="button" class="back" id="back">‹ Semua anak</button></div>
+    <div class="idcard">${avatarHTML(k)}<div style="min-width:0"><h1>${esc(k.nama)}</h1><div class="facts">${facts.map(f=>`<span class="fact">${esc(f)}</span>`).join("")}</div>
+    ${isOwner&&db?`<button type="button" class="editbtn" id="editKid">Ubah profil</button>`:""}</div></div>`;
   $("back").onclick=()=>go({name:"home"});
   if($("editKid"))$("editKid").onclick=()=>go({name:"kidform",id});
-  $("view").innerHTML=(""+(k.tujuan?("<div class=\"goal\"><b>Tujuan</b>"+(esc(k.tujuan))+"</div>"):"")+"\n  <div id=\"exslot\"></div>\n  <section><h2>Ringkasan</h2><div class=\"stats\">\n    <div class=\"stat\"><b id=\"sMatch\">0</b><span>Pertandingan</span></div>\n    <div class=\"stat\"><b id=\"sSet\">0</b><span>Set dimenangkan</span></div>\n    <div class=\"stat\"><b id=\"sTrain\">0</b><span>Catatan latihan</span></div></div></section>\n  <section><h2>Selisih Poin per Pertandingan</h2><div class=\"panel\"><div id=\"chartBox\"></div>\n    <p class=\"hint\">Batang makin pendek di bawah garis nol berarti skor makin rapat dengan lawan, tanda kemajuan walau belum menang.</p></div></section>\n  <section><h2>Latihan Fisik: Lari</h2><div class=\"panel\"><div id=\"runBox\"></div></div></section>\n  <section><h2>Keterampilan Terakhir</h2><div class=\"panel\"><div class=\"skills\" id=\"skills\"></div>\n    <p class=\"hint\">Nilai 1–5, sebaiknya diisi bersama pelatih sebulan sekali.</p></div></section>\n  "+(writable&&db?"<section><h2>Tambah Catatan</h2><div class=\"panel\"><div class=\"tabs\" role=\"tablist\" id=\"tabs\"></div><form id=\"form\" novalidate></form><p class=\"msg\" id=\"msg\" role=\"status\"></p></div></section>":"")+"\n  <section><h2>Riwayat</h2><div class=\"filter\" id=\"filter\"></div><div class=\"list\" id=\"list\"></div></section>");
+  $("view").innerHTML=`${k.tujuan?`<div class="goal"><b>Tujuan</b>${esc(k.tujuan)}</div>`:""}
+  <div id="exslot"></div>
+  <section><h2>Ringkasan</h2><div class="stats">
+    <div class="stat"><b id="sMatch">0</b><span>Pertandingan</span></div>
+    <div class="stat"><b id="sSet">0</b><span>Set dimenangkan</span></div>
+    <div class="stat"><b id="sTrain">0</b><span>Catatan latihan</span></div></div></section>
+  <section><h2>Selisih Poin per Pertandingan</h2><div class="panel"><div id="chartBox"></div>
+    <p class="hint">Batang makin pendek di bawah garis nol berarti skor makin rapat dengan lawan, tanda kemajuan walau belum menang.</p></div></section>
+  <section><h2>Latihan Fisik: Lari</h2><div class="panel"><div id="runBox"></div></div></section>
+  <section><h2>Keterampilan Terakhir</h2><div class="panel"><div class="skills" id="skills"></div>
+    <p class="hint">Nilai 1–5, sebaiknya diisi bersama pelatih sebulan sekali.</p></div></section>
+  ${writable&&db?`<section><h2>Tambah Catatan</h2><div class="panel"><div class="tabs" role="tablist" id="tabs"></div><form id="form" novalidate></form><p class="msg" id="msg" role="status"></p></div></section>`:""}
+  <section><h2>Riwayat</h2><div class="filter" id="filter"></div><div class="list" id="list"></div></section>`;
   if($("tabs")){renderTabs();renderForm()}
   renderFilter();renderKidData();
 }
@@ -411,73 +513,87 @@ function renderKidData(){
   const ex=isOwner&&entries.some(e=>e.contoh&&e.anak===view.id);$("exslot").innerHTML=ex?exbarHTML():"";bindExbar();
   renderStats();renderChart();renderRun();renderSkills();renderList();
 }
-
 function renderRun(){
   const all=of(view.id).filter(e=>e.jenis==="run").sort((a,b)=>(a.tanggal||"").localeCompare(b.tanggal||""));
-  if(!all.length){$("runBox").innerHTML="<div class=\"empty\">Belum ada catatan lari. Isi lewat tab <b>Lari</b> setelah latihan fisik mingguan.</div>";return}
+  if(!all.length){$("runBox").innerHTML=`<div class="empty">Belum ada catatan lari. Isi lewat tab <b>Lari</b> setelah latihan fisik mingguan.</div>`;return}
   const r=all.slice(-10),withP=r.filter(paceOf),last=all[all.length-1];
   const best=all.filter(paceOf).sort((a,b)=>paceOf(a)-paceOf(b))[0];
   const km=all.reduce((a,e)=>a+(+e.jarak||0),0);
-  let h=("<div class=\"stats\" style=\"margin-bottom:10px\">\n    <div class=\"stat\"><b>"+(all.length)+"</b><span>Sesi lari</span></div>\n    <div class=\"stat\"><b>"+(fmtKm(km))+"</b><span>Total km</span></div>\n    <div class=\"stat\"><b>"+(best?fmtDur(paceOf(best)):"–")+"</b><span>Pace terbaik /km</span></div></div>");
+  let h=`<div class="stats" style="margin-bottom:10px">
+    <div class="stat"><b>${all.length}</b><span>Sesi lari</span></div>
+    <div class="stat"><b>${fmtKm(km)}</b><span>Total km</span></div>
+    <div class="stat"><b>${best?fmtDur(paceOf(best)):"–"}</b><span>Pace terbaik /km</span></div></div>`;
   if(withP.length>=2){
     const ps=withP.map(paceOf);let lo=Math.min(...ps),hi=Math.max(...ps);const pad=Math.max(15,(hi-lo)*.15);lo=Math.max(0,Math.floor((lo-pad)/15)*15);hi=Math.ceil((hi+pad)/15)*15;
     const W=340,H=170,L=40,R=10,T=12,B=26,pw=W-L-R,ph=H-T-B,x=i=>L+pw*(withP.length===1?.5:i/(withP.length-1)),y=v=>T+ph*(v-lo)/(hi-lo);
-    let g=("<svg class=\"chart\" viewBox=\"0 0 "+(W)+" "+(H)+"\" role=\"img\" aria-label=\"Pace lari per sesi\">");
-    [lo,(lo+hi)/2,hi].forEach(v=>{g+=("<line x1=\""+(L)+"\" x2=\""+(W-R)+"\" y1=\""+(y(v))+"\" y2=\""+(y(v))+"\" stroke=\"var(--line)\"/><text x=\""+(L-6)+"\" y=\""+(y(v)+4)+"\" text-anchor=\"end\" font-size=\"10\" fill=\"var(--muted)\" font-family=\"Nunito Sans,system-ui\">"+(fmtDur(v))+"</text>")});
-    g+=("<polyline fill=\"none\" stroke=\"var(--court)\" stroke-width=\"2.5\" stroke-linejoin=\"round\" points=\""+(withP.map((e,i)=>(""+(x(i))+","+(y(paceOf(e))))).join(" "))+"\"/>");
-    withP.forEach((e,i)=>{const last=i===withP.length-1;g+=("<circle cx=\""+(x(i))+"\" cy=\""+(y(paceOf(e)))+"\" r=\""+(last?5:3.5)+"\" fill=\""+(last?"var(--cork)":"var(--court)")+"\"><title>"+(fmtDate(e.tanggal))+": "+(fmtKm(e.jarak))+" km, "+(fmtDur(paceOf(e)))+"/km</title></circle>");
-      const d=new Date((e.tanggal||today())+"T00:00:00");if(withP.length<=6||i%2===0||last)g+=("<text x=\""+(x(i))+"\" y=\""+(H-8)+"\" text-anchor=\"middle\" font-size=\"9.5\" fill=\"var(--muted)\" font-family=\"Nunito Sans,system-ui\">"+(d.getDate())+"/"+(d.getMonth()+1)+"</text>")});
-    h+=g+"</svg><p class=\"hint\">Pace = waktu per km. Garis makin <b>tinggi</b> di grafik berarti makin cepat (sumbu dibalik). Bandingkan sesi dengan jarak yang mirip.</p>";
-  } else h+="<p class=\"hint\">Grafik pace muncul setelah ada minimal 2 sesi lari dengan jarak dan waktu.</p>";
-  h+=("<p class=\"hint\">Terakhir "+(fmtDate(last.tanggal))+": "+(fmtKm(last.jarak))+" km"+(last.detik?(" dalam "+(fmtDur(last.detik))):"")+(paceOf(last)?(" ("+(fmtDur(paceOf(last)))+"/km)"):"")+".</p>");
+    let g=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pace lari per sesi">`;
+    [lo,(lo+hi)/2,hi].forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Nunito Sans,system-ui">${fmtDur(v)}</text>`});
+    g+=`<polyline fill="none" stroke="var(--court)" stroke-width="2.5" stroke-linejoin="round" points="${withP.map((e,i)=>`${x(i)},${y(paceOf(e))}`).join(" ")}"/>`;
+    withP.forEach((e,i)=>{const last=i===withP.length-1;g+=`<circle cx="${x(i)}" cy="${y(paceOf(e))}" r="${last?5:3.5}" fill="${last?"var(--cork)":"var(--court)"}"><title>${fmtDate(e.tanggal)}: ${fmtKm(e.jarak)} km, ${fmtDur(paceOf(e))}/km</title></circle>`;
+      const d=new Date((e.tanggal||today())+"T00:00:00");if(withP.length<=6||i%2===0||last)g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="Nunito Sans,system-ui">${d.getDate()}/${d.getMonth()+1}</text>`});
+    h+=g+`</svg><p class="hint">Pace = waktu per km. Garis makin <b>tinggi</b> di grafik berarti makin cepat (sumbu dibalik). Bandingkan sesi dengan jarak yang mirip.</p>`;
+  } else h+=`<p class="hint">Grafik pace muncul setelah ada minimal 2 sesi lari dengan jarak dan waktu.</p>`;
+  h+=`<p class="hint">Terakhir ${fmtDate(last.tanggal)}: ${fmtKm(last.jarak)} km${last.detik?` dalam ${fmtDur(last.detik)}`:""}${paceOf(last)?` (${fmtDur(paceOf(last))}/km)`:""}.</p>`;
   $("runBox").innerHTML=h;
 }
 function renderStats(){const m=of(view.id).filter(e=>e.jenis==="match");let sw=0;m.forEach(e=>sw+=matchInfo(e).w);
   $("sMatch").textContent=m.length;$("sSet").textContent=sw;$("sTrain").textContent=of(view.id).filter(e=>e.jenis==="train").length}
 function renderChart(){
   const m=of(view.id).filter(e=>e.jenis==="match"&&matchInfo(e).sets.length).sort((a,b)=>(a.tanggal||"").localeCompare(b.tanggal||"")).slice(-10);
-  if(!m.length){$("chartBox").innerHTML="<div class=\"empty\">Belum ada skor pertandingan.</div>";return}
+  if(!m.length){$("chartBox").innerHTML=`<div class="empty">Belum ada skor pertandingan.</div>`;return}
   const gaps=m.map(e=>matchInfo(e).gap);let mx=Math.max(10,...gaps.map(Math.abs));mx=Math.ceil(mx/10)*10;
   const W=340,H=180,L=34,R=8,T=12,B=26,ph=H-T-B,pw=W-L-R,y=v=>T+ph/2-(v/mx)*(ph/2),bw=Math.min(26,pw/m.length*0.6);
-  let g=("<svg class=\"chart\" viewBox=\"0 0 "+(W)+" "+(H)+"\" role=\"img\" aria-label=\"Selisih poin tiap pertandingan\">");
-  [mx,mx/2,0,-mx/2,-mx].forEach(v=>{g+=("<line x1=\""+(L)+"\" x2=\""+(W-R)+"\" y1=\""+(y(v))+"\" y2=\""+(y(v))+"\" stroke=\"var(--line)\" stroke-width=\""+(v===0?1.5:1)+"\"/><text x=\""+(L-6)+"\" y=\""+(y(v)+4)+"\" text-anchor=\"end\" font-size=\"10\" fill=\"var(--muted)\" font-family=\"Nunito Sans,system-ui\">"+(v>0?"+":"")+(v)+"</text>")});
+  let g=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Selisih poin tiap pertandingan">`;
+  [mx,mx/2,0,-mx/2,-mx].forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===0?1.5:1}"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Nunito Sans,system-ui">${v>0?"+":""}${v}</text>`});
   m.forEach((e,i)=>{const v=gaps[i],cx=L+pw*(i+0.5)/m.length,y0=y(0),y1=y(v);
-    g+=("<rect x=\""+(cx-bw/2)+"\" y=\""+(Math.min(y0,y1))+"\" width=\""+(bw)+"\" height=\""+(Math.max(1,Math.abs(y1-y0)))+"\" rx=\"3\" fill=\""+(v>=0?"var(--win)":"var(--lose)")+"\" opacity=\""+(i===m.length-1?1:.75)+"\"><title>"+(esc(e.turnamen||"Pertandingan"))+": "+(v>0?"+":"")+(v)+"</title></rect>");
-    const d=new Date((e.tanggal||today())+"T00:00:00");g+=("<text x=\""+(cx)+"\" y=\""+(H-8)+"\" text-anchor=\"middle\" font-size=\"9.5\" fill=\"var(--muted)\" font-family=\"Nunito Sans,system-ui\">"+(d.getDate())+"/"+(d.getMonth()+1)+"</text>")});
+    g+=`<rect x="${cx-bw/2}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.max(1,Math.abs(y1-y0))}" rx="3" fill="${v>=0?"var(--win)":"var(--lose)"}" opacity="${i===m.length-1?1:.75}"><title>${esc(e.turnamen||"Pertandingan")}: ${v>0?"+":""}${v}</title></rect>`;
+    const d=new Date((e.tanggal||today())+"T00:00:00");g+=`<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="Nunito Sans,system-ui">${d.getDate()}/${d.getMonth()+1}</text>`});
   $("chartBox").innerHTML=g+"</svg>";
 }
 function renderSkills(){
   const s=of(view.id).filter(e=>e.jenis==="skill").sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||""));
-  if(!s.length){$("skills").innerHTML="<div class=\"empty\">Belum ada penilaian keterampilan.</div>";return}
+  if(!s.length){$("skills").innerHTML=`<div class="empty">Belum ada penilaian keterampilan.</div>`;return}
   const last=s[0].nilai||{},prev=(s[1]&&s[1].nilai)||null;
   $("skills").innerHTML=SKILLS.map(([k,n])=>{const v=+last[k]||0,p=prev?+prev[k]||0:null,d=p===null||!v||!p?null:v-p;
-    return ("<div class=\"skill\"><span>"+(n)+"</span><div class=\"bar\"><i style=\"width:"+(v*20)+"%\"></i></div><span class=\"delta "+(d>0?"up":d<0?"down":"")+"\">"+(v||"–")+"/5"+(d?(" "+(d>0?"▲":"▼")):"")+"</span></div>")}).join("")+
-    ("<p class=\"hint\" style=\"margin:0\">Penilaian "+(fmtDate(s[0].tanggal))+(prev?(" · dibanding "+(fmtDate(s[1].tanggal))):"")+"</p>");
+    return `<div class="skill"><span>${n}</span><div class="bar"><i style="width:${v*20}%"></i></div><span class="delta ${d>0?"up":d<0?"down":""}">${v||"–"}/5${d?` ${d>0?"▲":"▼"}`:""}</span></div>`}).join("")+
+    `<p class="hint" style="margin:0">Penilaian ${fmtDate(s[0].tanggal)}${prev?` · dibanding ${fmtDate(s[1].tanggal)}`:""}</p>`;
 }
 function renderTabs(){
-  $("tabs").innerHTML=TYPES.map(([k,n])=>("<button class=\"tab\" role=\"tab\" type=\"button\" data-t=\""+(k)+"\" aria-selected=\""+(k===type)+"\">"+(n)+"</button>")).join("");
+  $("tabs").innerHTML=TYPES.map(([k,n])=>`<button class="tab" role="tab" type="button" data-t="${k}" aria-selected="${k===type}">${n}</button>`).join("");
   $("tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{type=b.dataset.t;renderTabs();renderForm()});
 }
 function renderForm(){
-  const f=$("form");if(!f)return;const d=("<label>Tanggal<input type=\"date\" id=\"f-tanggal\" value=\""+(today())+"\"></label>");
-  if(type==="match")f.innerHTML=("<div class=\"row\">"+(d)+"<label>Kategori umur<input id=\"f-kategori\" placeholder=\"mis. U-13\"></label></div>\n   <label>Nama turnamen<input id=\"f-turnamen\" placeholder=\"mis. Kejuaraan Antar Klub\"></label>\n   <div class=\"row\"><label>Lawan<input id=\"f-lawan\" placeholder=\"Nama / klub lawan\"></label><label>Babak<input id=\"f-babak\" placeholder=\"mis. Babak 1\"></label></div>\n   <label>Skor (anak dulu, pisahkan set dengan koma)<input id=\"f-skor\" inputmode=\"numeric\" placeholder=\"15-21, 18-21\"></label>\n   <label>Catatan<textarea id=\"f-catatan\" placeholder=\"Apa yang sudah bagus? Apa yang perlu diperbaiki?\"></textarea></label>");
-  else if(type==="train")f.innerHTML=("<div class=\"row\">"+(d)+"<label>Suasana hati anak<select id=\"f-mood\"><option>Semangat</option><option>Biasa</option><option>Lelah</option><option>Malas</option></select></label></div>\n   <label>Fokus latihan<input id=\"f-fokus\" placeholder=\"mis. footwork, servis pendek\"></label>\n   <label>Yang saya amati<textarea id=\"f-catatan\" placeholder=\"Hal kecil yang terlihat berbeda dari minggu lalu\"></textarea></label>");
-  else if(type==="run")f.innerHTML=("<div class=\"row\">"+(d)+"<label>Jenis lari<select id=\"f-jenislari\"><option>Lari jarak</option><option>Interval / sprint</option><option>Lari santai</option></select></label></div>\n   <div class=\"row\"><label>Jarak (km)<input id=\"f-jarak\" inputmode=\"decimal\" placeholder=\"mis. 2 atau 1,5\"></label><label>Waktu (menit:detik)<input id=\"f-waktu\" inputmode=\"numeric\" placeholder=\"mis. 12:30\"></label></div>\n   <p class=\"hint\" id=\"pacePrev\" style=\"margin:0\">Pace dihitung otomatis dari jarak dan waktu.</p>\n   <label>Kondisi setelah lari<select id=\"f-mood\"><option>Kuat</option><option>Biasa</option><option>Ngos-ngosan</option><option>Ada keluhan / sakit</option></select></label>\n   <label>Catatan<textarea id=\"f-catatan\" placeholder=\"mis. lari 5 putaran lapangan, sempat berhenti sekali\"></textarea></label>");
-  else if(type==="coach")f.innerHTML=(""+(d)+"<label>Masukan pelatih<textarea id=\"f-masukan\" placeholder=\"Kekuatan, kelemahan, yang sedang dilatih\"></textarea></label>\n   <label>Target berikutnya<input id=\"f-target\" placeholder=\"mis. servis panjang lebih konsisten\"></label>");
-  else{ratings={};f.innerHTML=d+SKILLS.map(([k,n])=>("<div class=\"rate\"><span>"+(n)+"</span><div class=\"dots\" data-s=\""+(k)+"\">"+([1,2,3,4,5].map(i=>("<button type=\"button\" data-v=\""+(i)+"\" aria-label=\""+(n)+" nilai "+(i)+"\">"+(i)+"</button>")).join(""))+"</div></div>")).join("")+
-   "<label>Catatan<textarea id=\"f-catatan\" placeholder=\"Opsional\"></textarea></label>";
+  const f=$("form");if(!f)return;const d=`<label>Tanggal<input type="date" id="f-tanggal" value="${today()}"></label>`;
+  if(type==="match")f.innerHTML=`<div class="row">${d}<label>Kategori umur<input id="f-kategori" placeholder="mis. U-13"></label></div>
+   <label>Nama turnamen<input id="f-turnamen" placeholder="mis. Kejuaraan Antar Klub"></label>
+   <div class="row"><label>Lawan<input id="f-lawan" placeholder="Nama / klub lawan"></label><label>Babak<input id="f-babak" placeholder="mis. Babak 1"></label></div>
+   <label>Skor (anak dulu, pisahkan set dengan koma)<input id="f-skor" inputmode="numeric" placeholder="15-21, 18-21"></label>
+   <label>Catatan<textarea id="f-catatan" placeholder="Apa yang sudah bagus? Apa yang perlu diperbaiki?"></textarea></label>`;
+  else if(type==="train")f.innerHTML=`<div class="row">${d}<label>Suasana hati anak<select id="f-mood"><option>Semangat</option><option>Biasa</option><option>Lelah</option><option>Malas</option></select></label></div>
+   <label>Fokus latihan<input id="f-fokus" placeholder="mis. footwork, servis pendek"></label>
+   <label>Yang saya amati<textarea id="f-catatan" placeholder="Hal kecil yang terlihat berbeda dari minggu lalu"></textarea></label>`;
+  else if(type==="run")f.innerHTML=`<div class="row">${d}<label>Jenis lari<select id="f-jenislari"><option>Lari jarak</option><option>Interval / sprint</option><option>Lari santai</option></select></label></div>
+   <div class="row"><label>Jarak (km)<input id="f-jarak" inputmode="decimal" placeholder="mis. 2 atau 1,5"></label><label>Waktu (menit:detik)<input id="f-waktu" inputmode="numeric" placeholder="mis. 12:30"></label></div>
+   <p class="hint" id="pacePrev" style="margin:0">Pace dihitung otomatis dari jarak dan waktu.</p>
+   <label>Kondisi setelah lari<select id="f-mood"><option>Kuat</option><option>Biasa</option><option>Ngos-ngosan</option><option>Ada keluhan / sakit</option></select></label>
+   <label>Catatan<textarea id="f-catatan" placeholder="mis. lari 5 putaran lapangan, sempat berhenti sekali"></textarea></label>`;
+  else if(type==="coach")f.innerHTML=`${d}<label>Masukan pelatih<textarea id="f-masukan" placeholder="Kekuatan, kelemahan, yang sedang dilatih"></textarea></label>
+   <label>Target berikutnya<input id="f-target" placeholder="mis. servis panjang lebih konsisten"></label>`;
+  else{ratings={};f.innerHTML=d+SKILLS.map(([k,n])=>`<div class="rate"><span>${n}</span><div class="dots" data-s="${k}">${[1,2,3,4,5].map(i=>`<button type="button" data-v="${i}" aria-label="${n} nilai ${i}">${i}</button>`).join("")}</div></div>`).join("")+
+   `<label>Catatan<textarea id="f-catatan" placeholder="Opsional"></textarea></label>`;
    f.querySelectorAll(".dots").forEach(g=>g.querySelectorAll("button").forEach(b=>b.onclick=()=>{ratings[g.dataset.s]=+b.dataset.v;g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.v<=ratings[g.dataset.s]))}))}
   pending.forEach(p=>URL.revokeObjectURL(p.url));pending=[];
-  if(type==="run"){const up=()=>{const k=num($("f-jarak").value),t=parseDur($("f-waktu").value);$("pacePrev").textContent=k>0&&t>0?("Pace: "+(fmtDur(t/k))+" per km"):"Pace dihitung otomatis dari jarak dan waktu."};$("f-jarak").oninput=up;$("f-waktu").oninput=up}
+  if(type==="run"){const up=()=>{const k=num($("f-jarak").value),t=parseDur($("f-waktu").value);$("pacePrev").textContent=k>0&&t>0?`Pace: ${fmtDur(t/k)} per km`:"Pace dihitung otomatis dari jarak dan waktu."};$("f-jarak").oninput=up;$("f-waktu").oninput=up}
   if(assets){const lbl=type==="match"?"Foto momen & lawan":type==="run"?"Foto lari":type==="train"?"Foto latihan":type==="coach"?"Foto (mis. catatan pelatih)":"Foto";
-    f.insertAdjacentHTML("beforeend",("<div class=\"photos\"><label for=\"f-foto\">"+(lbl)+" <span style=\"font-weight:400\">(maks. "+(MAXP)+")</span></label>\n      <div class=\"pick\"><button type=\"button\" class=\"pickbtn\" id=\"pickBtn\">+ Tambah foto</button><input type=\"file\" id=\"f-foto\" accept=\"image/*\" multiple hidden></div><div class=\"thumbs\" id=\"pthumbs\"></div></div>"));
+    f.insertAdjacentHTML("beforeend",`<div class="photos"><label for="f-foto">${lbl} <span style="font-weight:400">(maks. ${MAXP})</span></label>
+      <div class="pick"><button type="button" class="pickbtn" id="pickBtn">+ Tambah foto</button><input type="file" id="f-foto" accept="image/*" multiple hidden></div><div class="thumbs" id="pthumbs"></div></div>`);
     $("pickBtn").onclick=()=>$("f-foto").click();
     $("f-foto").onchange=ev=>{[...ev.target.files].forEach(fl=>{if(pending.length<MAXP&&/^image\//.test(fl.type))pending.push({file:fl,url:URL.createObjectURL(fl)})});ev.target.value="";renderPending()}}
-  f.insertAdjacentHTML("beforeend",("<button class=\"primary\" id=\"saveBtn\" type=\"submit\">Simpan untuk "+(esc(kids[view.id].nama))+"</button>"));
+  f.insertAdjacentHTML("beforeend",`<button class="primary" id="saveBtn" type="submit">Simpan untuk ${esc(kids[view.id].nama)}</button>`);
   f.onsubmit=submitEntry;
 }
 function renderPending(){const t=$("pthumbs");if(!t)return;
-  t.innerHTML=pending.map((p,i)=>("<div class=\"thumb\"><img src=\""+(p.url)+"\" alt=\"Foto "+(i+1)+"\"><button type=\"button\" class=\"x\" data-i=\""+(i)+"\" aria-label=\"Buang foto "+(i+1)+"\">×</button></div>")).join("");
+  t.innerHTML=pending.map((p,i)=>`<div class="thumb"><img src="${p.url}" alt="Foto ${i+1}"><button type="button" class="x" data-i="${i}" aria-label="Buang foto ${i+1}">×</button></div>`).join("");
   t.querySelectorAll(".x").forEach(b=>b.onclick=()=>{const p=pending.splice(+b.dataset.i,1)[0];URL.revokeObjectURL(p.url);renderPending()});
   $("pickBtn").hidden=pending.length>=MAXP}
 const val=id=>{const el=$(id);return el?el.value.trim():""};
@@ -501,24 +617,27 @@ async function submitEntry(ev){ev.preventDefault();
   catch(err){btn.disabled=false;btn.textContent=label;showMsg(errText(err),true)}
 }
 function renderFilter(){
-  $("filter").innerHTML=[["all","Semua"],...TYPES].map(([k,n])=>("<button class=\"tab\" type=\"button\" data-f=\""+(k)+"\" aria-selected=\""+(k===hfilter)+"\">"+(n)+"</button>")).join("");
+  $("filter").innerHTML=[["all","Semua"],...TYPES].map(([k,n])=>`<button class="tab" type="button" data-f="${k}" aria-selected="${k===hfilter}">${n}</button>`).join("");
   $("filter").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{hfilter=b.dataset.f;renderFilter();renderList()});
 }
 function itemHTML(e){
-  const kind=(TYPES.find(t=>t[0]===e.jenis)||[,""])[1],ex=e.contoh?"<span class=\"pill ex\">CONTOH</span> ":"";let body="";
+  const kind=(TYPES.find(t=>t[0]===e.jenis)||[,""])[1],ex=e.contoh?`<span class="pill ex">CONTOH</span> `:"";let body="";
   if(e.jenis==="match"){const i=matchInfo(e);
-    body=("<div class=\"head\"><span class=\"title\">"+(esc(e.turnamen||"Pertandingan"))+"</span>"+(i.won===null?"":("<span class=\"pill "+(i.won?"win":"lose")+"\">"+(i.won?"MENANG":"KALAH")+"</span>"))+"</div>\n    <div class=\"score\">"+(i.sets.map(s=>s.join("–")).join("  ·  "))+"</div>\n    <p class=\"hint\" style=\"margin:0\">"+([e.kategori,e.babak,e.lawan&&("vs "+e.lawan)].filter(Boolean).map(esc).join(" · "))+"</p>"+(e.catatan?("<p>"+(esc(e.catatan))+"</p>"):""))}
-  else if(e.jenis==="train")body=("<div class=\"head\"><span class=\"title\">"+(esc(e.fokus||"Latihan"))+"</span>"+(e.mood?("<span class=\"pill mood\">"+(esc(e.mood))+"</span>"):"")+"</div>"+(e.catatan?("<p>"+(esc(e.catatan))+"</p>"):""));
-  else if(e.jenis==="run")body=("<div class=\"head\"><span class=\"title\">"+(esc(e.jenislari||"Lari"))+"</span>"+(e.kondisi?("<span class=\"pill mood\">"+(esc(e.kondisi))+"</span>"):"")+"</div>\n    <div class=\"score\">"+(fmtKm(e.jarak))+" km"+(e.detik?("  ·  "+(fmtDur(e.detik))):"")+(paceOf(e)?("  ·  "+(fmtDur(paceOf(e)))+"/km"):"")+"</div>"+(e.catatan?("<p>"+(esc(e.catatan))+"</p>"):""));
-  else if(e.jenis==="coach")body=("<p>"+(esc(e.masukan))+"</p>"+(e.target?("<p><b>Target:</b> "+(esc(e.target))+"</p>"):""));
-  else body=("<p>"+(SKILLS.filter(([k])=>e.nilai&&e.nilai[k]).map(([k,n])=>(""+(n)+" "+(e.nilai[k]))).join(" · "))+"</p>"+(e.catatan?("<p>"+(esc(e.catatan))+"</p>"):""));
-  const ph=Array.isArray(e.foto)&&e.foto.length?("<div class=\"gallery\">"+(e.foto.filter(okId).map((id,i)=>("<button type=\"button\" class=\"thumb\" data-src=\""+(fotoUrl(id,1600))+"\" aria-label=\"Lihat foto "+(i+1)+"\"><img src=\""+(fotoUrl(id,300))+"\" alt=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer\"></button>")).join(""))+"</div>"):"";
-  return ("<article class=\"item\"><div class=\"head\"><span class=\"kind\">"+(ex)+(kind)+"</span><span class=\"date\">"+(fmtDate(e.tanggal))+"</span></div>"+(body)+(ph)+(isOwner&&db?("<button class=\"del\" type=\"button\" data-id=\""+(esc(e.id))+"\">Hapus</button>"):"")+"</article>");
+    body=`<div class="head"><span class="title">${esc(e.turnamen||"Pertandingan")}</span>${i.won===null?"":`<span class="pill ${i.won?"win":"lose"}">${i.won?"MENANG":"KALAH"}</span>`}</div>
+    <div class="score">${i.sets.map(s=>s.join("–")).join("  ·  ")}</div>
+    <p class="hint" style="margin:0">${[e.kategori,e.babak,e.lawan&&("vs "+e.lawan)].filter(Boolean).map(esc).join(" · ")}</p>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`}
+  else if(e.jenis==="train")body=`<div class="head"><span class="title">${esc(e.fokus||"Latihan")}</span>${e.mood?`<span class="pill mood">${esc(e.mood)}</span>`:""}</div>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`;
+  else if(e.jenis==="run")body=`<div class="head"><span class="title">${esc(e.jenislari||"Lari")}</span>${e.kondisi?`<span class="pill mood">${esc(e.kondisi)}</span>`:""}</div>
+    <div class="score">${fmtKm(e.jarak)} km${e.detik?`  ·  ${fmtDur(e.detik)}`:""}${paceOf(e)?`  ·  ${fmtDur(paceOf(e))}/km`:""}</div>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`;
+  else if(e.jenis==="coach")body=`<p>${esc(e.masukan)}</p>${e.target?`<p><b>Target:</b> ${esc(e.target)}</p>`:""}`;
+  else body=`<p>${SKILLS.filter(([k])=>e.nilai&&e.nilai[k]).map(([k,n])=>`${n} ${e.nilai[k]}`).join(" · ")}</p>${e.catatan?`<p>${esc(e.catatan)}</p>`:""}`;
+  const ph=Array.isArray(e.foto)&&e.foto.length?`<div class="gallery">${e.foto.filter(okId).map((id,i)=>`<button type="button" class="thumb" data-src="${fotoUrl(id,1600)}" aria-label="Lihat foto ${i+1}"><img src="${fotoUrl(id,300)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>`).join("")}</div>`:"";
+  return `<article class="item"><div class="head"><span class="kind">${ex}${kind}</span><span class="date">${fmtDate(e.tanggal)}</span></div>${body}${ph}${isOwner&&db?`<button class="del" type="button" data-id="${esc(e.id)}">Hapus</button>`:""}</article>`;
 }
 function renderList(){
   let l=of(view.id);if(hfilter!=="all")l=l.filter(e=>e.jenis===hfilter);
   l.sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||"")||(b.dibuat||0)-(a.dibuat||0));
-  $("list").innerHTML=l.length?l.map(itemHTML).join(""):("<div class=\"empty\">Belum ada catatan"+(hfilter==="all"?"":" jenis ini")+".</div>");
+  $("list").innerHTML=l.length?l.map(itemHTML).join(""):`<div class="empty">Belum ada catatan${hfilter==="all"?"":" jenis ini"}.</div>`;
   $("list").querySelectorAll(".del").forEach(b=>b.onclick=async()=>{
     if(!b.classList.contains("arm")){b.classList.add("arm");b.textContent="Ketuk lagi untuk menghapus";setTimeout(()=>{if(b.isConnected){b.classList.remove("arm");b.textContent="Hapus"}},3500);return}
     b.disabled=true;const ent=entries.find(x=>x.id===b.dataset.id);
@@ -527,8 +646,229 @@ function renderList(){
   $("list").querySelectorAll(".gallery .thumb").forEach(t=>t.onclick=()=>openLb(t.dataset.src));
 }
 
+/* ---------- Pengeluaran (hanya pemilik) ---------- */
+const XCAT=[["les","Les / pelatih"],["lapangan","Sewa lapangan"],["kok","Shuttlecock"],["senar","Pasang senar"],["raket","Raket"],["perlengkapan","Sepatu & perlengkapan"],["turnamen","Biaya turnamen"],["transport","Transport & makan"],["lain","Lain-lain"]];
+const catName=k=>(XCAT.find(c=>c[0]===k)||[,"Lain-lain"])[1];
+const rp=n=>"Rp "+Math.round(+n||0).toLocaleString("id-ID");
+const rpShort=n=>{n=+n||0;return n>=1e6?(n/1e6).toLocaleString("id-ID",{maximumFractionDigits:1})+" jt":n>=1e3?Math.round(n/1e3).toLocaleString("id-ID")+" rb":String(Math.round(n))};
+const monthKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+const shiftMonth=(k,n)=>{const [y,m]=k.split("-").map(Number);return monthKey(new Date(y,m-1+n,1))};
+const monthLabel=k=>fmtMonth(k);
+let biaya=[], xMonth=null, xCat="lapangan", xReceipt=null;
+function renderBiaya(){
+  $("top").innerHTML=`${whoBar()}<h1>Rapor Bulu Tangkis Nolan's Club</h1><p class="sub">Pengeluaran bulu tangkis keluarga.</p>${navHTML("biaya")}`;bindNav();bindWho();
+  if(!ready){$("view").innerHTML=`<div class="empty" style="margin-top:20px">Memuat…</div>`;return}
+  const nowK=today().slice(0,7);if(!xMonth)xMonth=nowK;
+  const inM=biaya.filter(x=>(x.tanggal||"").startsWith(xMonth));
+  const tot=inM.reduce((a,x)=>a+(+x.jumlah||0),0);
+  const yr=xMonth.slice(0,4),inY=biaya.filter(x=>(x.tanggal||"").startsWith(yr));
+  const totY=inY.reduce((a,x)=>a+(+x.jumlah||0),0);
+  const monthsY=new Set(inY.map(x=>x.tanggal.slice(0,7))).size||1;
+  const prev=biaya.filter(x=>(x.tanggal||"").startsWith(shiftMonth(xMonth,-1))).reduce((a,x)=>a+(+x.jumlah||0),0);
+  const diff=prev?Math.round((tot-prev)/prev*100):null;
+  let h=`<div class="monthbar"><button type="button" class="mbtn" id="mPrev" aria-label="Bulan sebelumnya">‹</button><b>${esc(monthLabel(xMonth))}</b><button type="button" class="mbtn" id="mNext" aria-label="Bulan berikutnya"${xMonth>=nowK?" disabled":""}>›</button></div>
+  <p class="private">Hanya Anda (pemilik) yang bisa melihat dan mengisi halaman ini.</p>
+  ${biaya.some(x=>x.contoh)?exbarHTML():""}
+  <section style="margin-top:12px"><div class="tiles">
+    <div class="tile big" style="grid-column:1/-1"><b class="money">${rp(tot)}</b><span>Total bulan ini</span><small>${diff===null?"Belum ada data bulan sebelumnya":(diff===0?"Sama dengan":(diff>0?"Naik "+diff+"% dari":"Turun "+(-diff)+"% dari"))+(diff===null?"":" bulan lalu ("+rp(prev)+")")}</small></div>
+    <div class="tile"><b class="money" style="font-size:1.3rem">${rp(totY)}</b><span>Total tahun ${yr}</span></div>
+    <div class="tile"><b class="money" style="font-size:1.3rem">${rp(totY/monthsY)}</b><span>Rata-rata per bulan</span><small>dari ${monthsY} bulan tercatat</small></div></div></section>`;
+  /* grafik 6 bulan */
+  const ms=[];for(let i=5;i>=0;i--)ms.push(shiftMonth(xMonth,-i));
+  const vals=ms.map(k=>biaya.filter(x=>(x.tanggal||"").startsWith(k)).reduce((a,x)=>a+(+x.jumlah||0),0));
+  if(vals.some(v=>v>0)){
+    let mx=Math.max(...vals);const step=Math.pow(10,Math.floor(Math.log10(mx||1)));mx=Math.ceil(mx/step)*step||1;
+    const W=340,H=170,L=44,R=6,T=10,B=24,pw=W-L-R,ph=H-T-B,bw=Math.min(30,pw/6*0.6);
+    let g=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pengeluaran 6 bulan terakhir">`;
+    [0,mx/2,mx].forEach(v=>{const y=T+ph-(v/mx)*ph;g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-5}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Nunito Sans,system-ui">${rpShort(v)}</text>`});
+    ms.forEach((k,i)=>{const cx=L+pw*(i+.5)/6,v=vals[i],hh=v/mx*ph,sel=k===xMonth;
+      g+=`<rect x="${cx-bw/2}" y="${T+ph-hh}" width="${bw}" height="${Math.max(hh,v?1:0)}" rx="3" fill="${sel?"var(--cork)":"var(--court)"}" opacity="${sel?1:.7}"><title>${esc(monthLabel(k))}: ${rp(v)}</title></rect>`;
+      const [y,m]=k.split("-").map(Number);g+=`<text x="${cx}" y="${H-7}" text-anchor="middle" font-size="9.5" fill="${sel?"var(--fg)":"var(--muted)"}" font-weight="${sel?700:400}" font-family="Nunito Sans,system-ui">${new Date(y,m-1,1).toLocaleDateString("id-ID",{month:"short"})}</text>`});
+    h+=`<section><h2>6 Bulan Terakhir</h2><div class="panel">${g}</svg></div></section>`;
+  }
+  /* per kategori & per anak */
+  const byCat=XCAT.map(([k,n])=>[n,inM.filter(x=>x.kategori===k).reduce((a,x)=>a+(+x.jumlah||0),0)]).filter(c=>c[1]>0).sort((a,b)=>b[1]-a[1]);
+  const kidRows=[["bersama","Bersama (semua anak)"],...sortedKids().map(([id,k])=>[id,k.nama])].map(([id,n])=>[n,inM.filter(x=>(x.anak||"bersama")===id).reduce((a,x)=>a+(+x.jumlah||0),0)]).filter(c=>c[1]>0);
+  const rows=(arr)=>{const m=Math.max(...arr.map(c=>c[1]),1);return arr.map(([n,v])=>`<div class="cat"><span>${esc(n)}</span><div class="bar"><i style="width:${v/m*100}%"></i></div><span class="amt">${rp(v)}</span></div>`).join("")};
+  h+=`<section><h2>Per Jenis</h2><div class="panel">${byCat.length?`<div class="cats">${rows(byCat)}</div>`:`<div class="empty">Belum ada pengeluaran di bulan ini.</div>`}</div></section>`;
+  if(kidRows.length)h+=`<section><h2>Per Anak</h2><div class="panel"><div class="cats">${rows(kidRows)}</div><p class="hint">"Bersama" untuk biaya yang dipakai beramai-ramai, misalnya sewa lapangan atau satu slop kok.</p></div></section>`;
+  /* formulir */
+  h+=`<section><h2>Tambah Pengeluaran</h2><div class="panel"><form id="xform" novalidate>
+    <div class="row"><label>Tanggal<input type="date" id="x-tgl" value="${xMonth===nowK?today():xMonth+"-01"}"></label>
+      <label>Jumlah (Rp)<input id="x-jml" inputmode="numeric" placeholder="mis. 150.000" autocomplete="off"></label></div>
+    <div class="row"><label>Jenis<select id="x-kat">${XCAT.map(([k,n])=>`<option value="${k}"${k===xCat?" selected":""}>${n}</option>`).join("")}</select></label>
+      <label>Untuk<select id="x-anak"><option value="bersama">Bersama (semua anak)</option>${sortedKids().map(([id,k])=>`<option value="${esc(id)}">${esc(k.nama)}</option>`).join("")}</select></label></div>
+    <label>Keterangan<input id="x-ket" maxlength="120" placeholder="mis. Les bulan Oktober, 1 slop kok, senar BG65"></label>
+    ${assets?`<div class="photos"><label for="x-foto">Foto struk <span style="font-weight:400">(opsional)</span></label><div class="pick"><button type="button" class="pickbtn" id="xPick">+ Foto struk</button><input type="file" id="x-foto" accept="image/*" hidden></div><div class="thumbs" id="xThumb"></div></div>`:""}
+    <button class="primary" type="submit" id="xSave">Simpan pengeluaran</button></form><p class="msg" id="msg" role="status"></p></div></section>`;
+  /* riwayat */
+  const list=inM.slice().sort((a,b)=>(b.tanggal||"").localeCompare(a.tanggal||"")||(b.dibuat||0)-(a.dibuat||0));
+  h+=`<section><h2>Rincian ${esc(monthLabel(xMonth))}</h2><div class="list">${list.length?list.map(x=>`<article class="xitem">
+      <span class="xtitle">${esc(x.keterangan||catName(x.kategori))}</span><span class="xamt">${rp(x.jumlah)}</span>
+      <span class="xmeta">${x.contoh?'<span class="pill ex">CONTOH</span>':""}<span class="pill mood">${esc(catName(x.kategori))}</span><span>${esc(x.anak&&x.anak!=="bersama"?(kids[x.anak]?kids[x.anak].nama:"Anak dihapus"):"Bersama")}</span><span>· ${fmtDate(x.tanggal)}</span></span>
+      ${okId(x.foto)?`<div class="gallery"><button type="button" class="thumb" data-src="${fotoUrl(x.foto,1600)}" aria-label="Lihat foto struk"><img src="${fotoUrl(x.foto,300)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button></div>`:""}
+      <span class="xact"><button type="button" data-copy="${esc(x.id)}">Salin ke hari ini</button><button type="button" data-del="${esc(x.id)}">Hapus</button></span></article>`).join(""):`<div class="empty">Belum ada pengeluaran di ${esc(monthLabel(xMonth))}.</div>`}</div></section>`;
+  $("view").innerHTML=h;bindExbar();
+  $("mPrev").onclick=()=>{xMonth=shiftMonth(xMonth,-1);renderBiaya()};
+  $("mNext").onclick=()=>{if(xMonth<nowK){xMonth=shiftMonth(xMonth,1);renderBiaya()}};
+  const jml=$("x-jml");jml.oninput=()=>{const d=jml.value.replace(/\D/g,"");jml.value=d?(+d).toLocaleString("id-ID"):""};
+  $("x-kat").onchange=e=>{xCat=e.target.value};
+  if($("xPick")){$("xPick").onclick=()=>$("x-foto").click();
+    $("x-foto").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f||!/^image\//.test(f.type))return;xReceipt&&URL.revokeObjectURL(xReceipt.url);xReceipt={file:f,url:URL.createObjectURL(f)};showReceipt()};showReceipt()}
+  $("xform").onsubmit=async ev=>{ev.preventDefault();
+    const n=+($("x-jml").value.replace(/\D/g,""));if(!n){showMsg("Isi jumlahnya dulu, mis. 150.000.",true);$("x-jml").focus();return}
+    const x={tanggal:$("x-tgl").value||today(),jumlah:n,kategori:$("x-kat").value,anak:$("x-anak").value,keterangan:$("x-ket").value.trim(),dibuat:Date.now(),foto:""};
+    const b=$("xSave");b.disabled=true;
+    let foto=null;
+    if(xReceipt){b.textContent="Menyiapkan foto…";try{foto=await upload(xReceipt.file,1400)}catch(err){b.disabled=false;b.textContent="Simpan pengeluaran";showMsg(uploadErr(err),true);return}}
+    b.textContent=foto?"Mengunggah foto…":"Menyimpan…";
+    try{const d=await api("simpanPengeluaran",pin,x,foto);applyData(d);xReceipt&&URL.revokeObjectURL(xReceipt.url);xReceipt=null;
+      if(!x.tanggal.startsWith(xMonth))xMonth=x.tanggal.slice(0,7);renderBiaya();showMsg("Tersimpan: "+rp(n)+".")}
+    catch(err){b.disabled=false;b.textContent="Simpan pengeluaran";showMsg(errText(err),true)}};
+  $("view").querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
+    if(!b.classList.contains("arm")){b.classList.add("arm");b.textContent="Ketuk lagi untuk hapus";setTimeout(()=>{if(b.isConnected){b.classList.remove("arm");b.textContent="Hapus"}},3500);return}
+    b.disabled=true;const x=biaya.find(y=>y.id===b.dataset.del);
+    busy(true,"Menghapus…");try{const d=await api("hapusPengeluaran",pin,b.dataset.del);applyData(d);renderBiaya()}catch(e){b.disabled=false;showMsg(errText(e),true)}finally{busy(false)}});
+  $("view").querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{const x=biaya.find(y=>y.id===b.dataset.copy);if(!x)return;
+    xMonth=nowK;xCat=x.kategori;renderBiaya();$("x-jml").value=(+x.jumlah).toLocaleString("id-ID");$("x-anak").value=x.anak||"bersama";$("x-ket").value=x.keterangan||"";
+    $("xform").scrollIntoView({behavior:"smooth",block:"center"});showMsg("Periksa lalu ketuk Simpan.")});
+  $("view").querySelectorAll(".gallery .thumb").forEach(t=>t.onclick=()=>openLb(t.dataset.src));
+}
+function showReceipt(){const t=$("xThumb");if(!t)return;t.innerHTML=xReceipt?`<div class="thumb"><img src="${xReceipt.url}" alt="Foto struk"><button type="button" class="x" id="xRm" aria-label="Buang foto">×</button></div>`:"";
+  if($("xRm"))$("xRm").onclick=()=>{URL.revokeObjectURL(xReceipt.url);xReceipt=null;showReceipt()};$("xPick").hidden=!!xReceipt}
+
+/* ---------- Laporan ---------- */
+let downloads={save:function(o){return new Promise(function(res){const u=URL.createObjectURL(o.data),a=document.createElement("a");a.href=u;a.download=o.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},5000);res({status:"saved"})})}}, lapOpt={per:"bulan",bulan:null,anak:"semua",dev:true,biaya:true};
+function lapRange(){
+  const nowK=today().slice(0,7);const o=lapOpt;let a,b,label;
+  const end=k=>{const [y,m]=k.split("-").map(Number);return k+"-"+String(new Date(y,m,0).getDate()).padStart(2,"0")};
+  if(o.per==="bulan"){a=nowK+"-01";b=end(nowK);label=monthLabel(nowK)}
+  else if(o.per==="lalu"){const k=shiftMonth(nowK,-1);a=k+"-01";b=end(k);label=monthLabel(k)}
+  else if(o.per==="3bln"){const k=shiftMonth(nowK,-2);a=k+"-01";b=end(nowK);label=monthLabel(k)+" – "+monthLabel(nowK)}
+  else if(o.per==="tahun"){a=nowK.slice(0,4)+"-01-01";b=nowK.slice(0,4)+"-12-31";label="Tahun "+nowK.slice(0,4)}
+  else{const k=o.bulan||nowK;a=k+"-01";b=end(k);label=monthLabel(k)}
+  return {a,b,label};
+}
+function buildReport(){
+  const {a,b,label}=lapRange(),inR=t=>t&&t>=a&&t<=b;
+  const ks=sortedKids().filter(([id])=>lapOpt.anak==="semua"||id===lapOpt.anak);
+  const R={label,dibuat:new Date().toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}),kids:[],biaya:null};
+  if(lapOpt.dev)ks.forEach(([id,k])=>{
+    const E=entries.filter(e=>e.anak===id&&inR(e.tanggal)).sort((x,y)=>(x.tanggal||"").localeCompare(y.tanggal||""));
+    const tr=E.filter(e=>e.jenis==="train"),ru=E.filter(e=>e.jenis==="run"),ma=E.filter(e=>e.jenis==="match"),co=E.filter(e=>e.jenis==="coach");
+    const mood={};tr.forEach(e=>{if(e.mood)mood[e.mood]=(mood[e.mood]||0)+1});
+    let mw=0,ml=0,sw=0,sl=0;const mrows=ma.map(e=>{const i=matchInfo(e);sw+=i.w;sl+=i.l;if(i.won===true)mw++;else if(i.won===false)ml++;
+      return [fmtDate(e.tanggal),[e.turnamen,e.babak].filter(Boolean).join(" · ")||"Pertandingan",e.lawan||"–",i.sets.map(s=>s.join("-")).join(", "),i.won===null?"–":i.won?"Menang":"Kalah"]});
+    const rp_=ru.filter(paceOf),best=rp_.slice().sort((x,y)=>paceOf(x)-paceOf(y))[0];
+    const skAll=entries.filter(e=>e.anak===id&&e.jenis==="skill"&&e.tanggal<=b).sort((x,y)=>(y.tanggal||"").localeCompare(x.tanggal||""));
+    const sk=skAll[0],skp=skAll[1];
+    R.kids.push({id,nama:k.nama,info:[k.lahir&&("Usia ±"+(new Date().getFullYear()-k.lahir)+" th"),k.klub,k.pelatih&&("Pelatih: "+k.pelatih)].filter(Boolean).join(" · "),
+      latihan:tr.length,fokus:tr.map(e=>e.fokus).filter(Boolean).slice(-5),mood,
+      lari:{n:ru.length,km:ru.reduce((s,e)=>s+(+e.jarak||0),0),best:best?paceOf(best):0,first:rp_[0]?paceOf(rp_[0]):0,last:rp_.length?paceOf(rp_[rp_.length-1]):0},
+      match:{n:ma.length,mw,ml,sw,sl,rows:mrows},
+      skill:sk?{tgl:fmtDate(sk.tanggal),prevTgl:skp?fmtDate(skp.tanggal):"",rows:SKILLS.filter(([s])=>sk.nilai&&sk.nilai[s]).map(([s,n])=>{const v=+sk.nilai[s],p=skp&&skp.nilai?+skp.nilai[s]||0:0;return [n,v+"/5",p?(v>p?"Naik +"+(v-p):v<p?"Turun "+(v-p):"Tetap"):"–"]})}:null,
+      coach:co.map(e=>[fmtDate(e.tanggal),e.masukan||"",e.target||""])});
+  });
+  if(lapOpt.biaya&&isOwner){
+    const X=biaya.filter(x=>inR(x.tanggal)&&(lapOpt.anak==="semua"||x.anak===lapOpt.anak)).sort((x,y)=>(x.tanggal||"").localeCompare(y.tanggal||""));
+    const bersamaLain=lapOpt.anak==="semua"?0:biaya.filter(x=>inR(x.tanggal)&&(x.anak||"bersama")==="bersama").reduce((s,x)=>s+(+x.jumlah||0),0);
+    const tot=X.reduce((s,x)=>s+(+x.jumlah||0),0);
+    const perKat=XCAT.map(([k,n])=>[n,X.filter(x=>x.kategori===k).reduce((s,x)=>s+(+x.jumlah||0),0)]).filter(r=>r[1]>0).sort((p,q)=>q[1]-p[1]);
+    const perAnak=lapOpt.anak!=="semua"?[]:[["bersama","Bersama"],...sortedKids().map(([id,k])=>[id,k.nama])].map(([id,n])=>[n,X.filter(x=>(x.anak||"bersama")===id).reduce((s,x)=>s+(+x.jumlah||0),0)]).filter(r=>r[1]>0);
+    const nm=x=>x.anak&&x.anak!=="bersama"?(kids[x.anak]?kids[x.anak].nama:"–"):"Bersama";
+    R.biaya={tot,perKat,perAnak,bersamaLain,rows:X.map(x=>[fmtDate(x.tanggal),catName(x.kategori),nm(x),x.keterangan||"",rp(x.jumlah)])};
+  }
+  return R;
+}
+function moodTxt(m){const k=Object.keys(m);return k.length?k.map(x=>x+" "+m[x]+"x").join(", "):"–"}
+function reportHTML(R){
+  const tbl=(head,rows,num)=>`<div class="tw"><table class="rt"><thead><tr>${head.map((h,i)=>`<th${(num||[]).includes(i)?' class="n"':""}>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr${r.tot?' class="tot"':""}>${r.map((c,i)=>`<td${(num||[]).includes(i)?' class="n"':""}>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  let h=`<div class="rhead"><h3>Rapor Bulu Tangkis Nolan's Club</h3><p>Periode: <b>${esc(R.label)}</b> · Dibuat ${esc(R.dibuat)}</p></div>`;
+  if(!R.kids.length&&!R.biaya)return h+`<p class="note">Pilih minimal satu isi laporan.</p>`;
+  R.kids.forEach(k=>{
+    h+=`<h4>${esc(k.nama)}</h4>${k.info?`<p class="note">${esc(k.info)}</p>`:""}
+    <div class="kv"><div><b>${k.latihan}</b><span>Catatan latihan</span></div><div><b>${k.lari.n}</b><span>Sesi lari · ${fmtKm(k.lari.km)} km</span></div>
+    <div><b>${k.match.n?k.match.mw+" M / "+k.match.ml+" K":"–"}</b><span>Pertandingan</span></div><div><b>${k.match.n?k.match.sw+" – "+k.match.sl:"–"}</b><span>Set menang – kalah</span></div></div>`;
+    if(k.latihan)h+=`<p class="note">Suasana hati: ${esc(moodTxt(k.mood))}${k.fokus.length?" · Fokus: "+esc(k.fokus.join(", ")):""}</p>`;
+    if(k.lari.n)h+=`<h5>Lari</h5><p class="note" style="color:var(--fg)">Pace terbaik ${k.lari.best?fmtDur(k.lari.best)+"/km":"–"}${k.lari.first&&k.lari.last&&k.lari.first!==k.lari.last?` · dari ${fmtDur(k.lari.first)} ke ${fmtDur(k.lari.last)} per km (${k.lari.last<k.lari.first?"makin cepat":"makin lambat"})`:""}</p>`;
+    if(k.match.rows.length)h+=`<h5>Pertandingan</h5>`+tbl(["Tanggal","Turnamen","Lawan","Skor","Hasil"],k.match.rows);
+    if(k.skill)h+=`<h5>Keterampilan (penilaian ${esc(k.skill.tgl)}${k.skill.prevTgl?", dibanding "+esc(k.skill.prevTgl):""})</h5>`+tbl(["Keterampilan","Nilai","Perubahan"],k.skill.rows,[1]);
+    if(k.coach.length)h+=`<h5>Masukan pelatih</h5>`+tbl(["Tanggal","Masukan","Target"],k.coach);
+  });
+  if(R.biaya){const B=R.biaya;
+    h+=`<h4>Pengeluaran</h4><div class="kv"><div><b>${rp(B.tot)}</b><span>Total periode ini</span></div>${B.bersamaLain?`<div><b>${rp(B.bersamaLain)}</b><span>Biaya bersama (semua anak)</span></div>`:""}</div>`;
+    if(B.perKat.length)h+=`<h5>Per jenis</h5>`+tbl(["Jenis","Jumlah"],B.perKat.map(r=>[r[0],rp(r[1])]),[1]);
+    if(B.perAnak.length)h+=`<h5>Per anak</h5>`+tbl(["Untuk","Jumlah"],B.perAnak.map(r=>[r[0],rp(r[1])]),[1]);
+    if(B.rows.length){const rows=B.rows.slice();const t=["","","","Total",rp(B.tot)];t.tot=true;rows.push(t);h+=`<h5>Rincian</h5>`+tbl(["Tanggal","Jenis","Untuk","Keterangan","Jumlah"],rows,[4])}
+    else h+=`<p class="note">Tidak ada pengeluaran di periode ini.</p>`;
+  }
+  return h;
+}
+function renderLap(){
+  $("top").innerHTML=`${whoBar()}<h1>Rapor Bulu Tangkis Nolan's Club</h1><p class="sub">Laporan untuk disimpan atau dibagikan.</p>${navHTML("lap")}`;bindNav();bindWho();
+  if(!ready){$("view").innerHTML=`<div class="empty" style="margin-top:20px">Memuat…</div>`;return}
+  const o=lapOpt;if(!o.bulan)o.bulan=today().slice(0,7);
+  $("view").innerHTML=`<section><h2>Atur Laporan</h2><div class="panel"><div class="opts">
+    <div class="row"><label>Periode<select id="l-per">${[["bulan","Bulan ini"],["lalu","Bulan lalu"],["3bln","3 bulan terakhir"],["tahun","Tahun ini"],["pilih","Pilih bulan…"]].map(([v,n])=>`<option value="${v}"${o.per===v?" selected":""}>${n}</option>`).join("")}</select></label>
+      <label id="l-bln-w"${o.per==="pilih"?"":" hidden"}>Bulan<input type="month" id="l-bln" value="${o.bulan}" max="${today().slice(0,7)}"></label></div>
+    <label>Anak<select id="l-anak"><option value="semua">Semua anak</option>${sortedKids().map(([id,k])=>`<option value="${esc(id)}"${o.anak===id?" selected":""}>${esc(k.nama)}</option>`).join("")}</select></label>
+    <div class="checks"><label><input type="checkbox" id="l-dev"${o.dev?" checked":""}> Perkembangan anak</label>${isOwner?`<label><input type="checkbox" id="l-biaya"${o.biaya?" checked":""}> Pengeluaran</label>`:""}</div>
+    <div class="dlrow"><button type="button" class="primary" id="l-pdf">Unduh PDF</button><span class="hint" id="l-st" style="margin:0"></span></div>
+    </div><p class="msg" id="msg" role="status"></p></div></section>
+    <section><h2>Pratinjau</h2><div class="paper" id="l-prev"></div></section>`;
+  const upd=()=>{o.per=$("l-per").value;o.bulan=$("l-bln").value||o.bulan;o.anak=$("l-anak").value;o.dev=$("l-dev").checked;o.biaya=$("l-biaya")?$("l-biaya").checked:false;$("l-bln-w").hidden=o.per!=="pilih";renderLapPreview()};
+  ["l-per","l-bln","l-anak","l-dev","l-biaya"].forEach(id=>{if($(id))$(id).onchange=upd});
+  $("l-pdf").onclick=exportPdf;
+  if(!window.jspdf){$("l-pdf").disabled=true;$("l-st").textContent="Pembuat PDF gagal dimuat. Muat ulang halaman."}
+  renderLapPreview();
+}
+function renderLapPreview(){const el=$("l-prev");if(el)el.innerHTML=reportHTML(buildReport())}
+async function exportPdf(){
+  const R=buildReport();if(!R.kids.length&&!R.biaya){showMsg("Pilih minimal satu isi laporan.",true);return}
+  if(!window.jspdf){showMsg("Pembuat PDF belum siap. Muat ulang halaman.",true);return}
+  const btn=$("l-pdf");btn.disabled=true;btn.textContent="Membuat PDF…";
+  try{
+    const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4"}),W=210,M=14;
+    const GREEN=[29,92,69],CORK=[201,130,43],GREY=[93,109,101],LINE=[217,226,220];
+    const clean=t=>String(t==null?"":t).replace(/[–—]/g,"-").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[^\x20-\x7E -ÿ]/g,"");
+    let y=0;
+    const head=()=>{doc.setFillColor(...GREEN);doc.rect(0,0,W,26,"F");doc.setTextColor(255);doc.setFont("helvetica","bold");doc.setFontSize(16);doc.text("RAPOR BULU TANGKIS NOLAN'S CLUB",M,12);
+      doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.text(clean("Periode: "+R.label+"   |   Dibuat "+R.dibuat),M,19.5);y=34};
+    const need=h=>{if(y+h>282){doc.addPage();y=16}};
+    const h4=t=>{need(16);doc.setTextColor(...GREEN);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(clean(t).toUpperCase(),M,y);doc.setDrawColor(...CORK);doc.setLineWidth(.6);doc.line(M,y+1.8,M+30,y+1.8);y+=8};
+    const h5=t=>{need(10);doc.setTextColor(...GREY);doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.text(clean(t).toUpperCase(),M,y);y+=2};
+    const para=(t,col)=>{doc.setTextColor(...(col||GREY));doc.setFont("helvetica","normal");doc.setFontSize(9);const L=doc.splitTextToSize(clean(t),W-2*M);need(L.length*4.2+1);doc.text(L,M,y);y+=L.length*4.2+1.5};
+    const kv=items=>{need(14);const cw=(W-2*M)/items.length;items.forEach(([v,l],i)=>{const x=M+i*cw;doc.setDrawColor(...GREEN);doc.setLineWidth(.8);doc.line(x,y-1,x,y+9);
+      doc.setTextColor(23,37,31);doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(clean(v),x+2.5,y+3);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(...GREY);doc.text(clean(l),x+2.5,y+7.5)});y+=13};
+    const table=(head,body,right,foot)=>{doc.autoTable({startY:y,head:[head.map(clean)],body:body.map(r=>r.map(clean)),foot:foot?[foot.map(clean)]:undefined,margin:{left:M,right:M},theme:"plain",
+      styles:{font:"helvetica",fontSize:8.5,cellPadding:1.6,textColor:[23,37,31],lineColor:LINE,lineWidth:{bottom:.2}},
+      headStyles:{fontStyle:"bold",textColor:GREY,fontSize:7.5,lineWidth:{bottom:.4},lineColor:GREEN},footStyles:{fontStyle:"bold",lineWidth:{top:.5},lineColor:[23,37,31]},
+      columnStyles:Object.fromEntries((right||[]).map(i=>[i,{halign:"right"}])),didParseCell:d=>{if((right||[]).includes(d.column.index))d.cell.styles.halign="right"}});y=doc.lastAutoTable.finalY+5};
+    head();
+    R.kids.forEach(k=>{h4(k.nama);if(k.info)para(k.info);
+      kv([[String(k.latihan),"Catatan latihan"],[k.lari.n+" / "+fmtKm(k.lari.km)+" km","Sesi lari / jarak"],[k.match.n?k.match.mw+" M / "+k.match.ml+" K":"-","Pertandingan"],[k.match.n?k.match.sw+" - "+k.match.sl:"-","Set menang - kalah"]]);
+      if(k.latihan)para("Suasana hati: "+moodTxt(k.mood)+(k.fokus.length?"   |   Fokus: "+k.fokus.join(", "):""));
+      if(k.lari.n){h5("Lari");y+=3;para("Pace terbaik "+(k.lari.best?fmtDur(k.lari.best)+"/km":"-")+(k.lari.first&&k.lari.last&&k.lari.first!==k.lari.last?"   |   dari "+fmtDur(k.lari.first)+" ke "+fmtDur(k.lari.last)+" per km ("+(k.lari.last<k.lari.first?"makin cepat":"makin lambat")+")":""),[23,37,31])}
+      if(k.match.rows.length){h5("Pertandingan");table(["Tanggal","Turnamen","Lawan","Skor","Hasil"],k.match.rows)}
+      if(k.skill){h5("Keterampilan (penilaian "+k.skill.tgl+(k.skill.prevTgl?", dibanding "+k.skill.prevTgl:"")+")");table(["Keterampilan","Nilai","Perubahan"],k.skill.rows,[1])}
+      if(k.coach.length){h5("Masukan pelatih");table(["Tanggal","Masukan","Target"],k.coach)}
+      y+=3});
+    if(R.biaya){const B=R.biaya;h4("Pengeluaran");kv([[rp(B.tot),"Total periode ini"]].concat(B.bersamaLain?[[rp(B.bersamaLain),"Biaya bersama (semua anak)"]]:[]));
+      if(B.perKat.length){h5("Per jenis");table(["Jenis","Jumlah"],B.perKat.map(r=>[r[0],rp(r[1])]),[1])}
+      if(B.perAnak.length){h5("Per anak");table(["Untuk","Jumlah"],B.perAnak.map(r=>[r[0],rp(r[1])]),[1])}
+      if(B.rows.length){h5("Rincian");table(["Tanggal","Jenis","Untuk","Keterangan","Jumlah"],B.rows,[4],["","","","Total",rp(B.tot)])}else para("Tidak ada pengeluaran di periode ini.")}
+    const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFontSize(7.5);doc.setTextColor(...GREY);doc.setFont("helvetica","normal");doc.text("Rapor Bulu Tangkis Nolan's Club",M,290);doc.text("Halaman "+i+" dari "+n,W-M,290,{align:"right"})}
+    const fname="Rapor-BT-"+clean(R.label).replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"")+".pdf";
+    const blob=doc.output("blob");
+    if(!downloads){showMsg("Unduhan tidak tersedia di tampilan ini.",true);return}
+    try{await downloads.save({filename:fname,data:blob});showMsg("PDF diunduh: "+fname+". Cek folder Download.")}
+    catch(e){if(e&&e.code==="declined")showMsg("Unduhan dibatalkan.");else if(e&&e.code==="rate_limited")showMsg("Masih ada permintaan unduhan yang terbuka. Coba lagi sebentar.",true);else showMsg("PDF belum bisa diunduh di tampilan ini.",true)}
+  }catch(e){showMsg("Gagal membuat PDF: "+((e&&e.message)||e),true)}
+  finally{btn.disabled=false;btn.textContent="Unduh PDF"}
+}
+
 /* ---------- Mulai ---------- */
-try{const v=JSON.parse(localStorage.getItem("rbt-view")||"null");if(v&&((v.name==="kid"&&v.id)||v.name==="home"||v.name==="dash"))view=v}catch(e){}
+try{const v=JSON.parse(localStorage.getItem("rbt-view")||"null");if(v&&((v.name==="kid"&&v.id)||v.name==="home"||v.name==="dash"||v.name==="biaya"||v.name==="lap"))view=v}catch(e){}
 render();
 async function refresh(){
   try{const d=await api("ambilData",pin);if(pin&&d.peran==="tamu"){pin="";try{localStorage.removeItem("rbt-pin")}catch(e){}}applyData(d);loadErr=""}
@@ -543,6 +883,7 @@ refresh();
 function renderKidHeaderSafe(){/* profil berubah dari perangkat lain: perbarui kartu identitas tanpa mengosongkan formulir */
   const f=$("form");if(f&&f.querySelector("input:not([type=date]):not([type=file]),textarea")&&[...f.querySelectorAll("input,textarea")].some(x=>x.type!=="date"&&x.type!=="file"&&x.value))return;
   renderKid()}
+})();
 </script>
 <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});</script>
 </body></html>
