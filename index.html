@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rapor Bulu Tangkis Nolan's Club</title>
+<meta name="theme-color" content="#1d5c45">
+<meta name="description" content="Catatan perkembangan bulu tangkis anak.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #1d5c45; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #f3f6f2; }
+  .layar { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: #1d5c45; color: #fff; text-align: center; padding: 24px; box-sizing: border-box; }
+  .layar img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 0 0 3px rgba(255,255,255,.35), 0 8px 24px rgba(0,0,0,.25); }
+  .layar h1 { font-size: 1.3rem; margin: 0; }
+  .layar p { margin: 0; opacity: .85; max-width: 32ch; line-height: 1.5; }
+  .layar button { background: #fff; color: #1d5c45; border: 0; border-radius: 999px; padding: 10px 20px; font: 700 1rem system-ui, sans-serif; cursor: pointer; }
+  .putar { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: p 0.9s linear infinite; }
+  @keyframes p { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .putar { animation: none; } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="layar" id="muat"><img src="icon-192.png" alt=""><h1>Rapor Bulu Tangkis</h1><div class="putar" aria-label="Memuat"></div></div>
+<div class="layar" id="offline" hidden><img src="icon-192.png" alt=""><h1>Tidak ada internet</h1><p>Data diambil langsung dari Google Sheets, jadi aplikasi perlu koneksi internet.</p><button type="button" id="ulang">Coba lagi</button></div>
+<div class="layar" id="belum" hidden><img src="icon-192.png" alt=""><h1>Alamat aplikasi belum diisi</h1><p>Buka file config.js di GitHub, lalu ganti TEMPEL_URL_EXEC_DI_SINI dengan alamat aplikasi web yang berakhiran /exec.</p></div>
+<iframe id="app" title="Rapor Bulu Tangkis" hidden allow="camera; clipboard-write"></iframe>
+<script src="config.js"></script>
+<script>
+(function () {
+  var muat = document.getElementById("muat"), off = document.getElementById("offline"), belum = document.getElementById("belum"), app = document.getElementById("app");
+  var url = (typeof APP_URL === "string") ? APP_URL.trim() : "";
+  function mulai() {
+    if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(url)) { muat.hidden = true; belum.hidden = false; return; }
+    if (!navigator.onLine) { muat.hidden = true; off.hidden = false; return; }
+    off.hidden = true; muat.hidden = false;
+    app.onload = function () { muat.hidden = true; app.hidden = false; };
+    app.src = url;
+    setTimeout(function () { muat.hidden = true; app.hidden = false; }, 8000);
+  }
+  document.getElementById("ulang").onclick = mulai;
+  window.addEventListener("online", function () { if (!off.hidden) mulai(); });
+  mulai();
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+})();
+</script>
+</body>
+</html>
