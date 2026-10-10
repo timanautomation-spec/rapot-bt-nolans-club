@@ -1,6 +1,6 @@
 // Service worker: menyimpan "bungkus" aplikasi agar cepat terbuka dan bisa dipasang.
 // Data tetap diambil langsung dari Google Sheets (perlu internet).
-var CACHE = "rapor-bt-v2";
+var CACHE = "rapor-bt-v3";
 var FILES = ["./", "./index.html", "./config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", function (e) {
@@ -20,7 +20,7 @@ self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
   // Utamakan versi terbaru dari internet; pakai simpanan kalau sedang offline.
   e.respondWith(
-    fetch(e.request).then(function (res) {
+    fetch(e.request.url, { cache: "no-store" }).then(function (res) {
       var copy = res.clone();
       caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
       return res;

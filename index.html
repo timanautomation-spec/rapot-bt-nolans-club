@@ -184,7 +184,7 @@ textarea{min-height:64px;resize:vertical}
 <div class="lb" id="lb" hidden><button type="button" id="lbClose">Tutup</button><img id="lbImg" alt="Foto"></div>
 <div id="diag" hidden style="position:fixed;left:12px;right:12px;bottom:12px;background:#b5483a;color:#fff;padding:12px 14px;border-radius:10px;font:600 14px system-ui,sans-serif;z-index:99"></div>
 <script>window.onerror=function(m,s,l){var d=document.getElementById("diag");d.hidden=false;d.textContent="Error: "+m+(l?" (baris "+l+")":"");};</script>
-<script src="config.js"></script>
+<script>document.write('<script src="config.js?t='+Date.now()+'"><\/script>')</script>
 <script>
 const SKILLS=[["footwork","Footwork"],["servis","Servis"],["clear","Lob / Clear"],["smash","Smash"],["netting","Netting"],["defend","Bertahan"]];
 const TYPES=[["train","Latihan"],["coach","Masukan Pelatih"],["skill","Nilai Keterampilan"],["run","Lari"],["match","Pertandingan"]];
@@ -204,7 +204,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const okId=id=>typeof id==="string"&&/^[A-Za-z0-9_-]{20,}$/.test(id);
 const fotoUrl=(id,w)=>("https://drive.google.com/thumbnail?id="+(encodeURIComponent(id))+"&sz=w"+(w||1200));
-const api=(fn,...a)=>{const u=(typeof APP_URL==="string"?APP_URL:"").trim();if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u))return Promise.reject(new Error("Alamat aplikasi belum diisi di config.js."));if(!navigator.onLine)return Promise.reject(new Error("Tidak ada internet. Coba lagi setelah tersambung."));return fetch(u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn:fn,args:a}),redirect:"follow"}).then(r=>{if(!r.ok)throw new Error("Server menjawab "+r.status+".");return r.json()},e=>{throw new Error("Tidak bisa terhubung ke Google. Periksa internet, lalu coba lagi.")}).then(o=>{if(!o||!o.ok)throw new Error((o&&o.error)||"Terjadi kesalahan.");return o.data})};
+const api=(fn,...a)=>{const u=(typeof APP_URL==="string"?APP_URL:"").trim();if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u))return Promise.reject(new Error("Alamat aplikasi belum diisi di config.js."));if(!navigator.onLine)return Promise.reject(new Error("Tidak ada internet. Coba lagi setelah tersambung."));return fetch(u,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn:fn,args:a}),redirect:"follow"}).then(r=>{if(!r.ok)throw new Error("Server menjawab "+r.status+" (alamat ..."+u.slice(-10)+").");return r.text().then(t=>{try{return JSON.parse(t)}catch(x){throw new Error("Jawaban Google bukan data (alamat ..."+u.slice(-10)+"): "+t.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,120))}})},e=>{throw new Error("Tidak bisa terhubung ke Google (alamat ..."+u.slice(-10)+"; "+((e&&e.message)||e)+").")}).then(o=>{if(!o||!o.ok)throw new Error((o&&o.error)||"Terjadi kesalahan.");return o.data})};
 const errText=e=>(e&&e.message?String(e.message).replace(/^Exception:\s*/,""):"Terjadi kesalahan. Coba lagi.");
 function busy(on,t){const b=$("busy");if(!b)return;b.textContent=t||"Menyimpan…";b.hidden=!on}
 function applyData(d){kids={};(d.anak||[]).forEach(k=>kids[k.id]=k);entries=d.catatan||[];role=d.peran||"tamu";isOwner=role==="pemilik";writable=role!=="tamu";ready=true}
